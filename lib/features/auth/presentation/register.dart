@@ -26,6 +26,7 @@ class _RegisterState extends State<Register> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text("Passwords do not match")));
+      
       return;
     }
 

@@ -1,42 +1,63 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class ComplaintModel {
+
   final String complaintId;
   final String name;
   final String mobileNo;
-  final String? email;
-  final String? description;
   final String location;
+  final String description;
   final String status;
+  final String adminId;
+  final String email;
+  final Timestamp? createdAt;
 
-  const ComplaintModel({
+  ComplaintModel({
     required this.complaintId,
+    required this.email,
     required this.name,
     required this.mobileNo,
     required this.location,
+    required this.description,
     required this.status,
-    this.email,
-    this.description,
+    required this.adminId,
+    this.createdAt,
   });
-  
-//for the backend later 
-  factory ComplaintModel.fromMap(Map<String, dynamic> map) {
+
+  factory ComplaintModel.fromFirestore(
+      DocumentSnapshot doc) {
+
+    final data =
+        doc.data() as Map<String, dynamic>;
+
     return ComplaintModel(
-      complaintId: map["complaintId"],
-      name: map["name"],
-      mobileNo: map["mobileNo"],
-      location: map["location"],
-      status: map["status"],
-      email: map["email"],
-      description: map["description"],
+      complaintId:
+          data["complaintId"] ?? "",
+
+      name:
+          data["name"] ?? "",
+
+      mobileNo:
+          data["mobileNo"] ?? "",
+
+      location:
+          data["location"] ?? "",
+
+      description:
+          data["description"] ?? "",
+
+      status:
+          data["status"] ?? "pending",
+
+      adminId:
+          data["adminId"] ?? "",
+          
+      email:
+          data["email"] ?? "",
+
+      createdAt:
+          data["createdAt"],
     );
   }
 
-  Map<String, dynamic> toMap() => {
-        "complaintId": complaintId,
-        "name": name,
-        "mobileNo": mobileNo,
-        "location": location,
-        "status": status,
-        "email": email,
-        "description": description,
-      };
 }

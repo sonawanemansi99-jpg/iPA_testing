@@ -37,18 +37,32 @@ class AuthService {
     }
   }
 
-  // LOGIN
-  Future<String?> login({
+  Future<Map<String, dynamic>?> login({
     required String email,
     required String password,
   }) async {
-    try {
-      await _auth.signInWithEmailAndPassword(email: email, password: password);
 
-      return null;
+    try {
+
+      UserCredential credential =
+          await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      String uid = credential.user!.uid;
+
+      DocumentSnapshot userDoc =
+          await _firestore.collection("users").doc(uid).get();
+
+      return userDoc.data() as Map<String, dynamic>;
+
     } on FirebaseAuthException catch (e) {
-      return e.message;
+
+      throw e.message ?? "Login failed";
+
     }
+
   }
 
   // LOGOUT

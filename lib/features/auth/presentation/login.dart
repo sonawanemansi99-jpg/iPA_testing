@@ -1,3 +1,4 @@
+import 'package:corporator_app/features/complaints/presentation/screens/list_complaints.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'register.dart';
@@ -16,22 +17,30 @@ class _LoginState extends State<Login> {
   final AuthService authService = AuthService();
 
   Future<void> loginUser() async {
-    String? error = await authService.login(
-      email: emailController.text.trim(),
-      password: passwordController.text.trim(),
-    );
+    try {
+      final userData = await authService.login(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
 
-    if (error == null) {
+      if (userData == null) return;
+
+      String role = userData["role"];
+
       ScaffoldMessenger.of(
+        // ignore: use_build_context_synchronously
         context,
       ).showSnackBar(const SnackBar(content: Text("Login Successful")));
 
-      // navigate to home page later
-      // Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => Home()));
-    } else {
+      Navigator.pushReplacement(
+        // ignore: use_build_context_synchronously
+        context,
+        MaterialPageRoute(builder: (_) => ListComplaints()),
+      );
+    } catch (e) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(error)));
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 
