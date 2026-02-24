@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "114101119019",
+    "project_id": "corporator-app-f245a",
+    "storage_bucket": "corporator-app-f245a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:114101119019:android:8a0542304b6fed0fdfe26e",
+        "android_client_info": {
+          "package_name": "com.example.corporator_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCsUjCmIyM4WXshF8Cka9ewlAr9kBg4Kw0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
