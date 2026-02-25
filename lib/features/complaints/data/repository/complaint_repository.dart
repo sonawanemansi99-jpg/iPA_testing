@@ -21,30 +21,3 @@ class ComplaintRepository {
         .toList();
   }
 }
-
-// import 'package:cloud_firestore/cloud_firestore.dart';
-// import '../../domain/model/complaint_model.dart';
-
-// class ComplaintRepository {
-
-//   final FirebaseFirestore firestore =
-//       FirebaseFirestore.instance;
-
-//   Future<List<ComplaintModel>>
-//       getComplaintsForAdmin(String adminId) async {
-
-//     final snapshot =
-//         await firestore
-//             .collection("complaints")
-//             .where("adminId", isEqualTo: adminId)
-//             .orderBy("createdAt", descending: true)
-//             .get();
-
-//     return snapshot.docs
-//         .map((doc) =>
-//             ComplaintModel.fromFirestore(doc))
-//         .toList();
-
-//   }
-
-// }

@@ -27,6 +27,7 @@ class AuthService {
         "email": email,
         "location": location,
         "createdAt": FieldValue.serverTimestamp(),
+        "role":"admin"
       });
 
       return null;

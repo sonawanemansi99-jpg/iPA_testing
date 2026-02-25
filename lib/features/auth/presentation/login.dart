@@ -13,6 +13,7 @@ class Login extends StatefulWidget {
 class _LoginState extends State<Login> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  bool isPasswordHidden = true;
 
   final AuthService authService = AuthService();
 
@@ -23,25 +24,42 @@ class _LoginState extends State<Login> {
         password: passwordController.text.trim(),
       );
 
-      if (userData == null) return;
+      /// SAFETY CHECK
+      if (userData == null) {
+        throw Exception("User data not found");
+      }
 
-      String role = userData["role"];
+      /// SAFE CAST (prevents null subtype error)
+      String role = userData["role"]?.toString() ?? "";
+
+      if (role.isEmpty) {
+        throw Exception("Role not assigned to this user");
+      }
+
+      if (!mounted) return;
 
       ScaffoldMessenger.of(
-        // ignore: use_build_context_synchronously
         context,
       ).showSnackBar(const SnackBar(content: Text("Login Successful")));
 
       Navigator.pushReplacement(
-        // ignore: use_build_context_synchronously
         context,
-        MaterialPageRoute(builder: (_) => ListComplaints()),
+        MaterialPageRoute(builder: (_) => const ListComplaints()),
       );
     } catch (e) {
+      if (!mounted) return;
+
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(e.toString())));
     }
+  }
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
   }
 
   @override
@@ -54,21 +72,16 @@ class _LoginState extends State<Login> {
             fit: BoxFit.cover,
           ),
         ),
-
         child: Center(
           child: Card(
             margin: const EdgeInsets.all(20),
-
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
-
             child: Padding(
               padding: const EdgeInsets.all(20),
-
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-
                 children: [
                   const Text(
                     "Login",
@@ -90,11 +103,24 @@ class _LoginState extends State<Login> {
 
                   TextField(
                     controller: passwordController,
-                    obscureText: true,
-                    decoration: const InputDecoration(
+                    obscureText: isPasswordHidden,
+                    decoration: InputDecoration(
                       labelText: "Password",
-                      prefixIcon: Icon(Icons.lock),
-                      border: OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.lock),
+                      border: const OutlineInputBorder(),
+
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          isPasswordHidden
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            isPasswordHidden = !isPasswordHidden;
+                          });
+                        },
+                      ),
                     ),
                   ),
 
@@ -114,9 +140,7 @@ class _LoginState extends State<Login> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (context) => const Register(),
-                        ),
+                        MaterialPageRoute(builder: (_) => const Register()),
                       );
                     },
                     child: const Text("Create Account"),

@@ -19,6 +19,9 @@ class _RegisterState extends State<Register> {
   final AuthService authService = AuthService();
 
   bool isLoading = false;
+  // Track visibility for both fields
+  bool isPasswordHidden = true;
+  bool isConfirmPasswordHidden = true;
 
   Future<void> registerUser() async {
     if (passwordController.text.trim() !=
@@ -26,7 +29,7 @@ class _RegisterState extends State<Register> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text("Passwords do not match")));
-      
+
       return;
     }
 
@@ -151,23 +154,49 @@ class _RegisterState extends State<Register> {
 
                           TextField(
                             controller: passwordController,
-                            obscureText: true,
-                            decoration: const InputDecoration(
+                            obscureText: isPasswordHidden,
+                            decoration: InputDecoration(
                               labelText: "Password",
-                              prefixIcon: Icon(Icons.lock),
-                              border: OutlineInputBorder(),
+                              prefixIcon: const Icon(Icons.lock),
+                              border: const OutlineInputBorder(),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  isPasswordHidden
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    isPasswordHidden = !isPasswordHidden;
+                                  });
+                                },
+                              ),
                             ),
                           ),
 
                           const SizedBox(height: 15),
 
+                          // Confirm Password Field
                           TextField(
                             controller: confirmPasswordController,
-                            obscureText: true,
-                            decoration: const InputDecoration(
+                            obscureText: isConfirmPasswordHidden,
+                            decoration: InputDecoration(
                               labelText: "Confirm Password",
-                              prefixIcon: Icon(Icons.lock_outline),
-                              border: OutlineInputBorder(),
+                              prefixIcon: const Icon(Icons.lock_outline),
+                              border: const OutlineInputBorder(),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  isConfirmPasswordHidden
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    isConfirmPasswordHidden =
+                                        !isConfirmPasswordHidden;
+                                  });
+                                },
+                              ),
                             ),
                           ),
 

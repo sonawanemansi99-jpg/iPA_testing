@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ComplaintModel {
-
   final String complaintId;
   final String name;
   final String mobileNo;
@@ -11,6 +10,7 @@ class ComplaintModel {
   final String adminId;
   final String email;
   final Timestamp? createdAt;
+  final List<Map<String, dynamic>> statusHistory;
 
   ComplaintModel({
     required this.complaintId,
@@ -22,42 +22,26 @@ class ComplaintModel {
     required this.status,
     required this.adminId,
     this.createdAt,
+    this.statusHistory = const [],
   });
 
-  factory ComplaintModel.fromFirestore(
-      DocumentSnapshot doc) {
-
-    final data =
-        doc.data() as Map<String, dynamic>;
-
+  factory ComplaintModel.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    final history = (data["statusHistory"] as List<dynamic>?)
+            ?.map((e) => Map<String, dynamic>.from(e))
+            .toList() ??
+        [];
     return ComplaintModel(
-      complaintId:
-          data["complaintId"] ?? "",
-
-      name:
-          data["name"] ?? "",
-
-      mobileNo:
-          data["mobileNo"] ?? "",
-
-      location:
-          data["location"] ?? "",
-
-      description:
-          data["description"] ?? "",
-
-      status:
-          data["status"] ?? "pending",
-
-      adminId:
-          data["adminId"] ?? "",
-          
-      email:
-          data["email"] ?? "",
-
-      createdAt:
-          data["createdAt"],
+      complaintId: data["complaintId"] ?? "",
+      name: data["name"] ?? "",
+      mobileNo: data["mobileNo"] ?? "",
+      location: data["location"] ?? "",
+      description: data["description"] ?? "",
+      status: data["status"] ?? "pending",
+      adminId: data["adminId"] ?? "",
+      email: data["email"] ?? "",
+      createdAt: data["createdAt"],
+      statusHistory: history,
     );
   }
-
 }
