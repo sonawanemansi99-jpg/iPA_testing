@@ -1,4 +1,7 @@
+import 'package:corporator_app/features/auth/presentation/forgot_password_page.dart';
 import 'package:corporator_app/features/complaints/presentation/screens/list_complaints.dart';
+import 'package:corporator_app/super_admin/presentations/admin_list_page.dart';
+import 'package:corporator_app/super_admin/presentations/super_admin_dashboard.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'register.dart';
@@ -23,14 +26,13 @@ class _LoginState extends State<Login> {
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
-
-      /// SAFETY CHECK
+      print(userData);
       if (userData == null) {
         throw Exception("User data not found");
       }
 
-      /// SAFE CAST (prevents null subtype error)
-      String role = userData["role"]?.toString() ?? "";
+      String role = (userData["role"]?.toString() ?? "").trim().toUpperCase();
+      String uid = userData["uid"];
 
       if (role.isEmpty) {
         throw Exception("Role not assigned to this user");
@@ -42,10 +44,22 @@ class _LoginState extends State<Login> {
         context,
       ).showSnackBar(const SnackBar(content: Text("Login Successful")));
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const ListComplaints()),
-      );
+      if (role == "ADMIN") {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => ListComplaints(adminId: uid)),
+        );
+      } else if (role == "CORPORATOR") {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => CorporatorDashboard()),
+        );
+        // Navigate to corporator page if needed
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("$role Unknown role")));
+      }
     } catch (e) {
       if (!mounted) return;
 
@@ -140,10 +154,18 @@ class _LoginState extends State<Login> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const Register()),
+                        MaterialPageRoute(
+                          builder: (context) => const ForgotPasswordPage(),
+                        ),
                       );
                     },
-                    child: const Text("Create Account"),
+                    child: const Text(
+                      "Forgot password?",
+                      style: TextStyle(
+                        decoration: TextDecoration.underline,
+                        fontSize: 14,
+                      ),
+                    ),
                   ),
                 ],
               ),

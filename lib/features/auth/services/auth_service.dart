@@ -27,7 +27,7 @@ class AuthService {
         "email": email,
         "location": location,
         "createdAt": FieldValue.serverTimestamp(),
-        "role":"admin"
+        "role": "admin",
       });
 
       return null;
@@ -42,29 +42,61 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-
     try {
-
-      UserCredential credential =
-          await _auth.signInWithEmailAndPassword(
+      UserCredential credential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
 
       String uid = credential.user!.uid;
 
-      DocumentSnapshot userDoc =
-          await _firestore.collection("users").doc(uid).get();
+      DocumentSnapshot userDoc = await _firestore
+          .collection("users")
+          .doc(uid)
+          .get();
 
-      return userDoc.data() as Map<String, dynamic>;
+      Map<String, dynamic> data = userDoc.data() as Map<String, dynamic>;
 
+      // Add UID to the returned data
+      data['uid'] = uid;
+
+      return data;
     } on FirebaseAuthException catch (e) {
-
       throw e.message ?? "Login failed";
-
     }
-
   }
+
+  Future<void> sendPasswordResetEmail({required String email}) async {
+    await _auth.sendPasswordResetEmail(email: email);
+  }
+
+  // Future<Map<String, dynamic>?> login({
+  //   required String email,
+  //   required String password,
+  // }) async {
+
+  //   try {
+
+  //     UserCredential credential =
+  //         await _auth.signInWithEmailAndPassword(
+  //       email: email,
+  //       password: password,
+  //     );
+
+  //     String uid = credential.user!.uid;
+
+  //     DocumentSnapshot userDoc =
+  //         await _firestore.collection("users").doc(uid).get();
+
+  //     return userDoc.data() as Map<String, dynamic>;
+
+  //   } on FirebaseAuthException catch (e) {
+
+  //     throw e.message ?? "Login failed";
+
+  //   }
+
+  // }
 
   // LOGOUT
   Future<void> logout() async {

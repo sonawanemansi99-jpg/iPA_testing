@@ -78,13 +78,13 @@ class _AdminQRDownloadPageState extends State<AdminQRDownloadPage> {
 
             const SizedBox(height: 30),
 
-            ElevatedButton.icon(
-              onPressed: downloadQR,
+            // ElevatedButton.icon(
+            //   onPressed: downloadQR,
 
-              icon: const Icon(Icons.download),
+            //   icon: const Icon(Icons.download),
 
-              label: const Text("Download QR"),
-            ),
+            //   label: const Text("Download QR"),
+            // ),
           ],
         ),
       ),
