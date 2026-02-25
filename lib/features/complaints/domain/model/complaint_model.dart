@@ -9,8 +9,9 @@ class ComplaintModel {
   final String status;
   final String adminId;
   final String email;
+  final String actionTaken;
   final Timestamp? createdAt;
-  final List<Map<String, dynamic>> statusHistory;
+  // final List<Map<String, dynamic>> statusHistory;
 
   ComplaintModel({
     required this.complaintId,
@@ -21,16 +22,13 @@ class ComplaintModel {
     required this.description,
     required this.status,
     required this.adminId,
+    required this.actionTaken,
     this.createdAt,
-    this.statusHistory = const [],
+    // this.statusHistory = const [],
   });
 
   factory ComplaintModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    final history = (data["statusHistory"] as List<dynamic>?)
-            ?.map((e) => Map<String, dynamic>.from(e))
-            .toList() ??
-        [];
     return ComplaintModel(
       complaintId: data["complaintId"] ?? "",
       name: data["name"] ?? "",
@@ -40,8 +38,9 @@ class ComplaintModel {
       status: data["status"] ?? "pending",
       adminId: data["adminId"] ?? "",
       email: data["email"] ?? "",
+      actionTaken: data["actionTaken"] ?? "",
       createdAt: data["createdAt"],
-      statusHistory: history,
+      // statusHistory: history,
     );
   }
 }

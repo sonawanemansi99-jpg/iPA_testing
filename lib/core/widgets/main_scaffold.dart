@@ -47,16 +47,6 @@ class _MainScaffoldState extends State<MainScaffold> {
       );
     }
 
-    void complaintHistory() {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => AdminComplaintsPage()
-        ),
-      );
-    }
-
-
     return Scaffold(
       body: Stack(
         children: [
@@ -116,7 +106,7 @@ class _MainScaffoldState extends State<MainScaffold> {
                       menuItem(Icons.person, "Profile"),
                       menuItem(Icons.admin_panel_settings_outlined, "Password"),
                       menuItem(Icons.article, "Complaints"),
-                      menuItem(Icons.all_inbox_rounded, "Complaint History",onTap: complaintHistory),
+                      menuItem(Icons.all_inbox_rounded, "Complaint History"),
                       menuItem(Icons.qr_code, "Download QR", onTap: downloadQR),
                       Padding(
                         padding: const EdgeInsets.all(10),
