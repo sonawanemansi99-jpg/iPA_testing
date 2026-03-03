@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:corporator_app/super_admin/data/admin_details.dart';
+import 'package:corporator_app/corporator/data/admin_details.dart';
 
 
 class AdminRepository {

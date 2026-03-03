@@ -2,7 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:corporator_app/core/widgets/app_text_input_field.dart';
 import 'package:corporator_app/core/widgets/main_scaffold.dart';
 import 'package:corporator_app/features/complaints/domain/model/complaint_model.dart';
-import 'package:corporator_app/features/complaints/presentation/widgets/action_image_selector.dart';
+import 'package:corporator_app/features/complaints/presentation/widgets/complaint_image_section.dart';
+import 'package:corporator_app/features/complaints/presentation/widgets/image_displayer.dart';
 import 'package:corporator_app/features/complaints/presentation/widgets/item.dart';
 import 'package:corporator_app/features/complaints/presentation/widgets/status_badge.dart';
 import 'package:flutter/material.dart';
@@ -27,10 +28,8 @@ class _EditComplaintStatusState extends State<EditComplaintStatus> {
   void initState() {
     super.initState();
     selectedStatus = widget.complaint.status;
-
-    // Pre-fill controller if complaint is already complete
     if (widget.complaint.status == "complete") {
-      actionDescriptionController.text = widget.complaint.actionTaken!;
+      actionDescriptionController.text = widget.complaint.actionTaken;
     }
   }
 
@@ -59,7 +58,6 @@ class _EditComplaintStatusState extends State<EditComplaintStatus> {
   }
 
   Future<void> updateComplaint() async {
-    // Validate if status is complete and action description is required
     if (selectedStatus == "complete") {
       if (!formKey.currentState!.validate()) return;
     }
@@ -67,7 +65,6 @@ class _EditComplaintStatusState extends State<EditComplaintStatus> {
     try {
       setState(() => isSubmitting = true);
 
-      // Find document by complaintId
       final query = await firestore
           .collection("complaints")
           .where("complaintId", isEqualTo: widget.complaint.complaintId)
@@ -77,7 +74,6 @@ class _EditComplaintStatusState extends State<EditComplaintStatus> {
       if (query.docs.isEmpty) throw Exception("Complaint not found");
       final docId = query.docs.first.id;
 
-      // Update the document
       await firestore.collection("complaints").doc(docId).update({
         "status": selectedStatus,
         if (selectedStatus == "complete")
@@ -94,12 +90,74 @@ class _EditComplaintStatusState extends State<EditComplaintStatus> {
 
       Navigator.pop(context, true);
     } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.toString())));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
     } finally {
       setState(() => isSubmitting = false);
     }
   }
+
+  void displayImagesDialog(List<String> images, String title) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  if (images.isEmpty)
+                    const Text("No images uploaded.")
+                  else
+                    ...images.map(
+                      (url) => Padding(
+                        padding: const EdgeInsets.only(bottom: 15),
+                        child: ImageBox(path: url),
+                      ),
+                    ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("Back"),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Widget buildImageSection(String title, List<String> images) {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+  //       const SizedBox(height: 6),
+  //       images.isEmpty
+  //           ? const Text("No images uploaded.")
+  //           : TextButton(
+  //               onPressed: () => displayImagesDialog(images, title),
+  //               child: const Text("View Images"),
+  //             ),
+  //       const SizedBox(height: 16),
+  //     ],
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -129,11 +187,13 @@ class _EditComplaintStatusState extends State<EditComplaintStatus> {
                     item("Complaint ID", widget.complaint.complaintId),
                     item("Name", widget.complaint.name),
                     item("Mobile No.", widget.complaint.mobileNo),
-                    item("Email", widget.complaint.email ?? "Not Provided"),
                     item(
-                      "Description",
-                      widget.complaint.description ?? "No description available",
+                      "Email",
+                      widget.complaint.email.isNotEmpty
+                          ? widget.complaint.email
+                          : "Not Provided",
                     ),
+                    item("Description", widget.complaint.description),
                     item("Location", widget.complaint.location),
                     const SizedBox(height: 20),
                     Row(
@@ -149,7 +209,7 @@ class _EditComplaintStatusState extends State<EditComplaintStatus> {
                     const SizedBox(height: 20),
                     if (!isCompleted)
                       DropdownButtonFormField<String>(
-                        value: selectedStatus,
+                        initialValue: selectedStatus,
                         decoration: const InputDecoration(
                           labelText: "Update Status",
                           border: OutlineInputBorder(),
@@ -161,25 +221,24 @@ class _EditComplaintStatusState extends State<EditComplaintStatus> {
                           });
                         },
                       ),
-                    if (selectedStatus == "complete") ...[
+                    if (selectedStatus == "complete" || isCompleted) ...[
                       const SizedBox(height: 20),
                       const Text(
                         "Actions taken:",
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 10),
-                      // Show text field only if complaint is not already complete
                       if (!isCompleted)
                         AppTextField(
                           label: "Describe the actions taken",
                           controller: actionDescriptionController,
                           maxLines: 3,
                           validator: (value) {
-                            if (value == null || value.isEmpty) return "Required";
+                            if (value == null || value.isEmpty)
+                              return "Required";
                             return null;
                           },
                         ),
-                      // If already completed, show the previous description
                       if (isCompleted)
                         Container(
                           padding: const EdgeInsets.all(12),
@@ -188,14 +247,13 @@ class _EditComplaintStatusState extends State<EditComplaintStatus> {
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
-                            widget.complaint.actionTaken ?? "No action description",
+                            widget.complaint.actionTaken,
                             style: const TextStyle(fontSize: 16),
                           ),
                         ),
                       const SizedBox(height: 20),
-                      const Text("Upload Evidence Photos"),
-                      const SizedBox(height: 10),
-                      const ComplaintImageSection(),
+                      // Allow new uploads only if complaint is not completed
+                      if (!isCompleted) ComplaintImageSection(complaintId: widget.complaint.complaintId,),
                     ],
                     const SizedBox(height: 30),
                     if (!isCompleted)

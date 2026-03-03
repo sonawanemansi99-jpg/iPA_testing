@@ -11,7 +11,9 @@ class ComplaintModel {
   final String email;
   final String actionTaken;
   final Timestamp? createdAt;
-  // final List<Map<String, dynamic>> statusHistory;
+  final String zoneName;
+  final List<String> citizenImages; // new
+  final List<String> adminImages;   // new
 
   ComplaintModel({
     required this.complaintId,
@@ -23,14 +25,17 @@ class ComplaintModel {
     required this.status,
     required this.adminId,
     required this.actionTaken,
+    required this.zoneName,
     this.createdAt,
-    // this.statusHistory = const [],
+    this.citizenImages = const [],
+    this.adminImages = const [],
   });
 
   factory ComplaintModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+
     return ComplaintModel(
-      complaintId: data["complaintId"] ?? "",
+      complaintId: data["complaintId"] ?? doc.id,
       name: data["name"] ?? "",
       mobileNo: data["mobileNo"] ?? "",
       location: data["location"] ?? "",
@@ -40,7 +45,9 @@ class ComplaintModel {
       email: data["email"] ?? "",
       actionTaken: data["actionTaken"] ?? "",
       createdAt: data["createdAt"],
-      // statusHistory: history,
+      zoneName: data["zoneName"] ?? "",
+      citizenImages: List<String>.from(data["citizenImages"] ?? []),
+      adminImages: List<String>.from(data["adminImages"] ?? []),
     );
   }
 }

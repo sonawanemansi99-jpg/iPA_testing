@@ -1,8 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:corporator_app/core/widgets/gradient.dart';
 import 'package:corporator_app/core/widgets/main_scaffold.dart';
+import 'package:corporator_app/corporator/presentations/create_zone_dialog.dart';
 import 'package:corporator_app/features/auth/presentation/register.dart';
-import 'package:corporator_app/super_admin/presentations/admin_list_page.dart';
+import 'package:corporator_app/corporator/presentations/admin_list_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -145,26 +146,6 @@ class _CorporatorDashboardState extends State<CorporatorDashboard> {
                 ],
               ),
             ),
-
-            // const SizedBox(height: 24),
-
-            // Row(
-            //   children: [
-            //     Expanded(
-            //       child: CorporatorDashboard._statTile(
-            //         title: "Assigned Admins",
-            //         count: "15",
-            //       ),
-            //     ),
-            //     const SizedBox(width: 12),
-            //     Expanded(
-            //       child: CorporatorDashboard._statTile(
-            //         title: "Complaints Registered",
-            //         count: "52",
-            //       ),
-            //     ),
-            //   ],
-            // ),
             const SizedBox(height: 30),
 
             SizedBox(
@@ -209,8 +190,31 @@ class _CorporatorDashboardState extends State<CorporatorDashboard> {
               ),
             ),
 
-            const SizedBox(height: 14),
+            // const SizedBox(height: 14),
+            // SizedBox(
+            //   width: double.infinity,
+            //   child: ElevatedButton(
+            //     onPressed: () {
+            //       showDialog(
+            //         context: context,
+            //         builder: (_) => const CreateZoneDialog(),
+            //       );
+            //     },
+            //     style: ElevatedButton.styleFrom(
+            //       backgroundColor: Colors.white,
+            //       padding: const EdgeInsets.symmetric(vertical: 14),
+            //       shape: RoundedRectangleBorder(
+            //         borderRadius: BorderRadius.circular(12),
+            //       ),
+            //     ),
+            //     child: const Text(
+            //       "Create Zone",
+            //       style: TextStyle(fontSize: 16, color: Colors.black),
+            //     ),
+            //   ),
+            // ),
 
+            const SizedBox(height: 14),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(

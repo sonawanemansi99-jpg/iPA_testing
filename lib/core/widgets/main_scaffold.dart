@@ -1,9 +1,8 @@
 import 'package:corporator_app/core/widgets/appbar.dart';
 import 'package:corporator_app/core/widgets/gradient.dart';
-import 'package:corporator_app/features/QR/admin_qr_download_page.dart';
+import 'package:corporator_app/features/QR/corporator_qr_download_page.dart';
 import 'package:corporator_app/features/auth/presentation/login.dart';
 import 'package:corporator_app/features/auth/services/auth_service.dart';
-import 'package:corporator_app/features/complaints/presentation/screens/admin_complaints_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -40,9 +39,7 @@ class _MainScaffoldState extends State<MainScaffold> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => AdminQRDownloadPage(
-            adminId: FirebaseAuth.instance.currentUser!.uid,
-          ),
+          builder: (_) => CorporatorQRDownloadPage(),
         ),
       );
     }

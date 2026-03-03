@@ -1,10 +1,9 @@
 import 'package:corporator_app/features/auth/presentation/forgot_password_page.dart';
 import 'package:corporator_app/features/complaints/presentation/screens/list_complaints.dart';
-import 'package:corporator_app/super_admin/presentations/admin_list_page.dart';
-import 'package:corporator_app/super_admin/presentations/super_admin_dashboard.dart';
+import 'package:corporator_app/corporator/presentations/corporator_dashboard.dart';
+import 'package:corporator_app/superadmin/presentation/pages/register_corporator.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
-import 'register.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -21,53 +20,64 @@ class _LoginState extends State<Login> {
   final AuthService authService = AuthService();
 
   Future<void> loginUser() async {
-    try {
-      final userData = await authService.login(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
+  try {
+    final email = emailController.text.trim();
+    final password = passwordController.text.trim();
+
+    /// 1️⃣ Check for Super Admin FIRST (Hardcoded)
+    if (email == "superadmin@gmail.com" && password == "superadmin@123") {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => CorporatorRegistrationPage()),
       );
-      print(userData);
-      if (userData == null) {
-        throw Exception("User data not found");
-      }
-
-      String role = (userData["role"]?.toString() ?? "").trim().toUpperCase();
-      String uid = userData["uid"];
-
-      if (role.isEmpty) {
-        throw Exception("Role not assigned to this user");
-      }
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Login Successful")));
-
-      if (role == "ADMIN") {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => ListComplaints(adminId: uid)),
-        );
-      } else if (role == "CORPORATOR") {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => CorporatorDashboard()),
-        );
-        // Navigate to corporator page if needed
-      } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("$role Unknown role")));
-      }
-    } catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      return;
     }
+
+    /// 🔵 2️⃣ Otherwise check Firebase for Admin & Corporator
+    final userData = await authService.login(
+      email: email,
+      password: password,
+    );
+
+    if (userData == null) {
+      throw Exception("User data not found");
+    }
+
+    String role =
+        (userData["role"]?.toString() ?? "").trim().toUpperCase();
+    String uid = userData["uid"];
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Login Successful")),
+    );
+
+    if (role == "ADMIN") {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ListComplaints(adminId: uid),
+        ),
+      );
+    } else if (role == "CORPORATOR") {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => CorporatorDashboard(),
+        ),
+      );
+    } else {
+      throw Exception("Unknown role");
+    }
+  } catch (e) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(e.toString())),
+    );
   }
+}
 
   @override
   void dispose() {

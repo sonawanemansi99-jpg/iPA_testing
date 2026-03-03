@@ -1,6 +1,6 @@
 import 'package:corporator_app/core/widgets/main_scaffold.dart';
-import 'package:corporator_app/super_admin/data/admin_details.dart';
-import 'package:corporator_app/super_admin/domain/admin_repository.dart';
+import 'package:corporator_app/corporator/data/admin_details.dart';
+import 'package:corporator_app/corporator/domain/admin_repository.dart';
 import 'package:flutter/material.dart';
 
 class EditPage extends StatefulWidget {
@@ -29,7 +29,7 @@ class _EditPageState extends State<EditPage> {
   void initState() {
     super.initState();
 
-    /// ✅ preload existing admin data
+    ///  preload existing admin data
     nameController =
         TextEditingController(text: widget.admin.name);
 
