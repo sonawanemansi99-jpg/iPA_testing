@@ -420,10 +420,13 @@ class _CorporatorDashboardState extends State<CorporatorDashboard>
                           english: "ADD NEW ADMIN",
                           color: saffron,
                           accentColor: Colors.white,
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const Register()),
-                          ),
+                          onTap: () {
+                            
+                          },
+                          // onTap: () => Navigator.push(
+                          //   context,
+                          //   MaterialPageRoute(builder: (_) => const Register()),
+                          // ),
                         ),
 
                         const SizedBox(height: 12),

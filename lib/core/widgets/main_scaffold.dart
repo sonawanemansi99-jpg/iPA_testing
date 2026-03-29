@@ -713,9 +713,9 @@
 
 import 'package:corporator_app/features/QR/corporator_qr_download_page.dart';
 import 'package:corporator_app/features/auth/presentation/login.dart';
-import 'package:corporator_app/features/auth/services/auth_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:corporator_app/features/videos/corporator_videos_page.dart';
+import 'package:corporator_app/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'dart:math' as math;

@@ -1,10 +1,12 @@
 import 'package:corporator_app/features/auth/presentation/forgot_password_page.dart';
 import 'package:corporator_app/features/complaints/presentation/screens/list_complaints.dart';
 import 'package:corporator_app/corporator/presentations/corporator_dashboard.dart';
+import 'package:corporator_app/services/auth_service.dart';
 import 'package:corporator_app/superadmin/presentation/pages/register_corporator.dart';
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
-import '../services/auth_service.dart';
+
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -23,7 +25,7 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
 
-  final AuthService authService = AuthService();
+  final AuthService _authService = AuthService();
 
   // Brand Colors — Saffron + Deep Tricolor
   static const Color saffron = Color(0xFFFF6700);
@@ -61,80 +63,90 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  Future<void> loginUser() async {
-    setState(() => _isLoading = true);
-    try {
-      final email = emailController.text.trim();
-      final password = passwordController.text.trim();
 
-      if (email == "superadmin@gmail.com" && password == "superadmin@123") {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => CorporatorRegistrationPage()),
-        );
-        return;
-      }
+// Assuming you have instantiated the service at the top of your state class:
+// final AuthService _authService = AuthService();
 
-      final userData = await authService.login(
-        email: email,
-        password: password,
-      );
-      if (userData == null) throw Exception("User data not found");
+Future<void> loginUser() async {
+  setState(() => _isLoading = true);
+  
+  try {
+    final email = emailController.text.trim();
+    final password = passwordController.text.trim();
 
-      String role = (userData["role"]?.toString() ?? "").trim().toUpperCase();
-      String uid = userData["uid"];
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: const [
-              Icon(Icons.check_circle, color: Colors.white),
-              SizedBox(width: 10),
-              Text(
-                "जय हिन्द! Login Successful",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          backgroundColor: saffron,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
-
-      if (role == "ADMIN") {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => ListComplaints(adminId: uid)),
-        );
-      } else if (role == "CORPORATOR") {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => CorporatorDashboard()),
-        );
-      } else {
-        throw Exception("Unknown role");
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString()),
-          backgroundColor: Colors.red.shade800,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+    // 1. Call the new Spring Boot AuthService
+    bool success = await _authService.login(email, password);
+    
+    if (!success) {
+      throw Exception("Invalid credentials or server error");
     }
+
+    // 2. Fetch the securely stored role
+    const storage = FlutterSecureStorage();
+    String role = await storage.read(key: 'user_role') ?? "";
+    String uid = await storage.read(key: 'user_id') ?? "1"; // See important note below!
+
+    if (!mounted) return;
+
+    // 3. Show your beautiful Success SnackBar
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.white),
+            SizedBox(width: 10),
+            Text(
+              "जय हिन्द! Login Successful",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        backgroundColor: saffron, // Replaced 'saffron' variable if not defined locally
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    );
+
+    // 4. Route based on Spring Boot Roles
+    if (role == "ROLE_SUPER_ADMIN") {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => CorporatorRegistrationPage()),
+      );
+    } else if (role == "ROLE_ADMIN") {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => CorporatorDashboard()),
+      );
+    } else if (role == "ROLE_ZONE_SEVAK") {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => ListComplaints(adminId: uid)), // Or SevakDashboard
+      );
+    } else {
+      throw Exception("Unknown role received: $role");
+    }
+
+  } catch (e) {
+    if (!mounted) return;
+    
+    // 5. Show Error SnackBar
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(e.toString().replaceAll("Exception: ", "")),
+        backgroundColor: Colors.red.shade800,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    );
+  } finally {
+    if (mounted) setState(() => _isLoading = false);
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -412,12 +424,15 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const ForgotPasswordPage(),
-                      ),
-                    ),
+                    onPressed: () {
+                      
+                    },
+                    // onPressed: () => Navigator.push(
+                    //   context,
+                    //   MaterialPageRoute(
+                    //     builder: (_) => const ForgotPasswordPage(),
+                    //   ),
+                    // ),
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 4,
