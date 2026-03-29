@@ -12,8 +12,12 @@ class ComplaintModel {
   final String actionTaken;
   final Timestamp? createdAt;
   final String zoneName;
-  final List<String> citizenImages; // new
-  final List<String> adminImages;   // new
+
+  final List<String> citizenImages;
+  final List<String> adminImages;
+
+  final String citizenVoiceNote; 
+  final String adminVoiceNote; 
 
   ComplaintModel({
     required this.complaintId,
@@ -26,6 +30,8 @@ class ComplaintModel {
     required this.adminId,
     required this.actionTaken,
     required this.zoneName,
+    required this.citizenVoiceNote,
+    required this.adminVoiceNote, 
     this.createdAt,
     this.citizenImages = const [],
     this.adminImages = const [],
@@ -46,8 +52,12 @@ class ComplaintModel {
       actionTaken: data["actionTaken"] ?? "",
       createdAt: data["createdAt"],
       zoneName: data["zoneName"] ?? "",
+
       citizenImages: List<String>.from(data["citizenImages"] ?? []),
       adminImages: List<String>.from(data["adminImages"] ?? []),
+
+      citizenVoiceNote: data["citizenVoiceNote"] ?? "", 
+      adminVoiceNote: data["adminVoiceNote"] ?? "", 
     );
   }
 }

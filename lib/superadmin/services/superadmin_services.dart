@@ -20,9 +20,7 @@ class SuperadminServices {
     required String name,
     required String email,
     required String password,
-    required String mobileNo,
-    required String ward,
-    required String zone,
+    required String mobileNo
   }) async {
     try {
       // Create user in Firebase Auth
@@ -40,8 +38,6 @@ class SuperadminServices {
         'name': name,
         'email': email,
         'mobileNo': mobileNo,
-        'ward': ward,
-        'zone': zone,
         'role': 'CORPORATOR',
         'createdAt': FieldValue.serverTimestamp(),
       });
