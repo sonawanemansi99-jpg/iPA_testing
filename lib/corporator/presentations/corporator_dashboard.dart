@@ -1,252 +1,13 @@
-// import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:corporator_app/core/widgets/gradient.dart';
-// import 'package:corporator_app/core/widgets/main_scaffold.dart';
-// import 'package:corporator_app/corporator/presentations/create_zone_dialog.dart';
-// import 'package:corporator_app/features/auth/presentation/register.dart';
-// import 'package:corporator_app/corporator/presentations/admin_list_page.dart';
-// import 'package:firebase_auth/firebase_auth.dart';
-// import 'package:flutter/material.dart';
-
-// class CorporatorDashboard extends StatefulWidget {
-//   const CorporatorDashboard({super.key});
-
-//   @override
-//   State<CorporatorDashboard> createState() => _CorporatorDashboardState();
-
-//   static Widget _statTile({required String title, required String count}) {
-//     return Container(
-//       padding: const EdgeInsets.symmetric(vertical: 22),
-//       decoration: BoxDecoration(
-//         gradient: AppGradients.darkGradient,
-//         borderRadius: BorderRadius.circular(14),
-//         boxShadow: [
-//           BoxShadow(
-//             color: Colors.black.withOpacity(0.3),
-//             blurRadius: 10,
-//             offset: const Offset(0, 5),
-//           ),
-//         ],
-//       ),
-//       child: Column(
-//         children: [
-//           Text(
-//             title,
-//             textAlign: TextAlign.center,
-//             style: const TextStyle(color: Colors.white, fontSize: 14),
-//           ),
-//           const SizedBox(height: 10),
-//           Text(
-//             count,
-//             style: const TextStyle(
-//               color: Colors.white,
-//               fontSize: 32,
-//               fontWeight: FontWeight.bold,
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
-// class _CorporatorDashboardState extends State<CorporatorDashboard> {
-//   final FirebaseAuth _auth = FirebaseAuth.instance;
-//   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-//   Future<Map<String, dynamic>?> fetchCurrentUserData() async {
-//     final user = _auth.currentUser;
-//     if (user == null) return null;
-
-//     final docSnap = await _firestore.collection('users').doc(user.uid).get();
-//     if (!docSnap.exists) return null;
-
-//     return docSnap.data(); // Contains name, email, mobileNo, role, etc.
-//   }
-
-//   void adminList() {
-//     Navigator.push(
-//       context,
-//       MaterialPageRoute(builder: (_) => const AdminListPage()),
-//     );
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return MainScaffold(
-//       title: "Dashboard",
-//       body: SingleChildScrollView(
-//         padding: const EdgeInsets.all(16),
-//         child: Column(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             Container(
-//               padding: const EdgeInsets.all(16),
-//               decoration: BoxDecoration(
-//                 gradient: AppGradients.glowGradient,
-//                 borderRadius: BorderRadius.circular(16),
-//                 boxShadow: [
-//                   BoxShadow(
-//                     blurRadius: 8,
-//                     color: Colors.black.withOpacity(0.08),
-//                     offset: const Offset(0, 4),
-//                   ),
-//                 ],
-//               ),
-//               child: Row(
-//                 children: [
-//                   const CircleAvatar(
-//                     radius: 35,
-//                     // backgroundImage:
-//                     //     AssetImage("assets/images/logo.jpg"),
-//                   ),
-
-//                   const SizedBox(width: 16),
-
-//                   FutureBuilder<Map<String, dynamic>?>(
-//                     future: fetchCurrentUserData(),
-//                     builder: (context, snapshot) {
-//                       if (snapshot.connectionState == ConnectionState.waiting) {
-//                         return const CircularProgressIndicator();
-//                       }
-//                       if (!snapshot.hasData || snapshot.data == null) {
-//                         return const Text("User data not found");
-//                       }
-
-//                       final userData = snapshot.data!;
-//                       final name = userData['name'] ?? '';
-//                       final email = userData['email'] ?? '';
-//                       final mobileNo = userData['mobileNo'] ?? '';
-
-//                       return Column(
-//                         crossAxisAlignment: CrossAxisAlignment.start,
-//                         children: [
-//                           Text(
-//                             name,
-//                             style: const TextStyle(
-//                               fontSize: 20,
-//                               fontWeight: FontWeight.bold,
-//                               color: Colors.white,
-//                             ),
-//                           ),
-//                           const SizedBox(height: 6),
-//                           Text(
-//                             "Email: $email",
-//                             style: TextStyle(color: Colors.white),
-//                           ),
-//                           const SizedBox(height: 6),
-//                           Text(
-//                             "Mob: $mobileNo",
-//                             style: TextStyle(color: Colors.white),
-//                           ),
-//                           // Optionally add ward/zone if stored in Firestore
-//                         ],
-//                       );
-//                     },
-//                   ),
-//                 ],
-//               ),
-//             ),
-//             const SizedBox(height: 30),
-
-//             SizedBox(
-//               width: double.infinity,
-//               child: ElevatedButton(
-//                 onPressed: adminList,
-//                 style: ElevatedButton.styleFrom(
-//                   backgroundColor: Colors.white,
-//                   padding: const EdgeInsets.symmetric(vertical: 14),
-//                   shape: RoundedRectangleBorder(
-//                     borderRadius: BorderRadius.circular(12),
-//                   ),
-//                 ),
-//                 child: const Text(
-//                   "View All Admins",
-//                   style: TextStyle(fontSize: 16, color: Colors.black),
-//                 ),
-//               ),
-//             ),
-
-//             const SizedBox(height: 14),
-//             SizedBox(
-//               width: double.infinity,
-//               child: ElevatedButton(
-//                 onPressed: () {
-//                   Navigator.push(
-//                     context,
-//                     MaterialPageRoute(builder: (_) => const Register()),
-//                   );
-//                 },
-//                 style: ElevatedButton.styleFrom(
-//                   backgroundColor: Colors.white,
-//                   padding: const EdgeInsets.symmetric(vertical: 14),
-//                   shape: RoundedRectangleBorder(
-//                     borderRadius: BorderRadius.circular(12),
-//                   ),
-//                 ),
-//                 child: const Text(
-//                   "Add Admin",
-//                   style: TextStyle(fontSize: 16, color: Colors.black),
-//                 ),
-//               ),
-//             ),
-
-//             // const SizedBox(height: 14),
-//             // SizedBox(
-//             //   width: double.infinity,
-//             //   child: ElevatedButton(
-//             //     onPressed: () {
-//             //       showDialog(
-//             //         context: context,
-//             //         builder: (_) => const CreateZoneDialog(),
-//             //       );
-//             //     },
-//             //     style: ElevatedButton.styleFrom(
-//             //       backgroundColor: Colors.white,
-//             //       padding: const EdgeInsets.symmetric(vertical: 14),
-//             //       shape: RoundedRectangleBorder(
-//             //         borderRadius: BorderRadius.circular(12),
-//             //       ),
-//             //     ),
-//             //     child: const Text(
-//             //       "Create Zone",
-//             //       style: TextStyle(fontSize: 16, color: Colors.black),
-//             //     ),
-//             //   ),
-//             // ),
-
-//             const SizedBox(height: 14),
-//             SizedBox(
-//               width: double.infinity,
-//               child: ElevatedButton(
-//                 onPressed: () {},
-//                 style: ElevatedButton.styleFrom(
-//                   backgroundColor: Colors.white,
-//                   padding: const EdgeInsets.symmetric(vertical: 14),
-//                   shape: RoundedRectangleBorder(
-//                     borderRadius: BorderRadius.circular(12),
-//                   ),
-//                 ),
-//                 child: const Text(
-//                   "Customize design",
-//                   style: TextStyle(fontSize: 16, color: Colors.black),
-//                 ),
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:corporator_app/core/widgets/gradient.dart';
 import 'package:corporator_app/core/widgets/main_scaffold.dart';
+import 'package:corporator_app/corporator/presentations/zone_sevak_list_page.dart';
 import 'package:corporator_app/corporator/presentations/corporator_complaints_page.dart';
-import 'package:corporator_app/corporator/presentations/create_zone_dialog.dart';
-import 'package:corporator_app/features/auth/presentation/register.dart';
-import 'package:corporator_app/corporator/presentations/admin_list_page.dart';
-import 'package:corporator_app/features/complaints/presentation/screens/list_complaints.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:corporator_app/corporator/presentations/create_zone_page.dart';
+import 'package:corporator_app/corporator/presentations/zone_list_page.dart'; // Added this import
+import 'package:corporator_app/corporator/presentations/zone_sevak_registration_page.dart';
+import 'package:corporator_app/features/auth/presentation/login.dart';  
+import 'package:corporator_app/services/admin_services.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
@@ -294,8 +55,9 @@ class CorporatorDashboard extends StatefulWidget {
 
 class _CorporatorDashboardState extends State<CorporatorDashboard>
     with TickerProviderStateMixin {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  
+  // ── SPRING BOOT SERVICE REPLACES FIREBASE ──
+  final AdminServices _corporatorServices = AdminServices();
 
   AnimationController? _pulseController;
   Animation<double>? _pulseAnimation;
@@ -332,18 +94,19 @@ class _CorporatorDashboardState extends State<CorporatorDashboard>
     super.dispose();
   }
 
-  Future<Map<String, dynamic>?> fetchCurrentUserData() async {
-    final user = _auth.currentUser;
-    if (user == null) return null;
-    final docSnap = await _firestore.collection('users').doc(user.uid).get();
-    if (!docSnap.exists) return null;
-    return docSnap.data();
-  }
-
   void adminList() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const AdminListPage()),
+      MaterialPageRoute(builder: (_) => const ZoneSevakListPage()),
+    );
+  }
+
+  void _logout() async {
+    await _corporatorServices.logout();
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const Login()),
     );
   }
 
@@ -354,6 +117,7 @@ class _CorporatorDashboardState extends State<CorporatorDashboard>
 
     return MainScaffold(
       title: "Dashboard",
+      // Optional: Add a logout button to the app bar if MainScaffold supports actions
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -403,10 +167,11 @@ class _CorporatorDashboardState extends State<CorporatorDashboard>
                         const SizedBox(height: 14),
 
                         // ── Action Buttons ──
+                        // Remember: In backend terminology, these are Zone Sevaks!
                         _buildActionButton(
                           icon: Icons.admin_panel_settings,
-                          hindi: "सभी एडमिन देखें",
-                          english: "VIEW ALL ADMINS",
+                          hindi: "सभी ज़ोन सेवक देखें", // Translated to Zone Sevak
+                          english: "VIEW ALL ZONE SEVAKS",
                           color: navyBlue,
                           accentColor: gold,
                           onTap: adminList,
@@ -416,33 +181,15 @@ class _CorporatorDashboardState extends State<CorporatorDashboard>
 
                         _buildActionButton(
                           icon: Icons.person_add_alt_1,
-                          hindi: "नया एडमिन जोड़ें",
-                          english: "ADD NEW ADMIN",
+                          hindi: "नया ज़ोन सेवक जोड़ें",
+                          english: "ADD NEW ZONE SEVAK",
                           color: saffron,
                           accentColor: Colors.white,
                           onTap: () {
-                            
-                          },
-                          // onTap: () => Navigator.push(
-                          //   context,
-                          //   MaterialPageRoute(builder: (_) => const Register()),
-                          // ),
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        _buildActionButton(
-                          icon: Icons.list_alt_outlined,
-                          hindi: "शिकायतें देखें",
-                          english: "VIEW COMPLAINTS",
-                          color: const Color(0xFF1A6FAB), // ashoka blue
-                          accentColor: Colors.white,
-                          onTap: () {
-                            final uid = _auth.currentUser?.uid ?? '';
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => ListComplaints(adminId: uid),
+                                builder: (_) => const ZoneSevakRegistrationPage(),
                               ),
                             );
                           },
@@ -451,12 +198,59 @@ class _CorporatorDashboardState extends State<CorporatorDashboard>
                         const SizedBox(height: 12),
 
                         _buildActionButton(
-                          icon: Icons.palette_outlined,
-                          hindi: "डिज़ाइन कस्टमाइज़",
-                          english: "CUSTOMIZE DESIGN",
-                          color: const Color(0xFF5C2D8E),
+                          icon: Icons.list_alt_outlined,
+                          hindi: "शिकायतें देखें",
+                          english: "VIEW COMPLAINTS",
+                          color: const Color(0xFF1A6FAB), 
                           accentColor: Colors.white,
-                          onTap: () {},
+                          onTap: () async {
+                            final storage = const FlutterSecureStorage();
+                            final uid = await storage.read(key: 'user_id') ?? '';
+                            if (!mounted) return;
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const CorporatorComplaintsPage(),
+                              ),
+                            );
+                          },
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // ── NEW: View All Zones Button ──
+                        _buildActionButton(
+                          icon: Icons.map_outlined,
+                          hindi: "सभी ज़ोन देखें",
+                          english: "VIEW ALL ZONES",
+                          color: indiaGreen,
+                          accentColor: Colors.white,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const ZoneListPage(),
+                              ),
+                            );
+                          },
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        _buildActionButton(
+                          icon: Icons.add_location_alt_outlined,
+                          hindi: "नया ज़ोन बनाएं",
+                          english: "CREATE NEW ZONE",
+                          color: const Color(0xFF004B87), // A distinct deeper blue
+                          accentColor: Colors.white,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const CreateZonePage(),
+                              ),
+                            );
+                          },
                         ),
 
                         const SizedBox(height: 28),
@@ -464,15 +258,9 @@ class _CorporatorDashboardState extends State<CorporatorDashboard>
                         // ── Footer tricolor ──
                         Row(
                           children: [
-                            Expanded(
-                              child: Container(height: 3, color: saffron),
-                            ),
-                            Expanded(
-                              child: Container(height: 3, color: warmWhite),
-                            ),
-                            Expanded(
-                              child: Container(height: 3, color: indiaGreen),
-                            ),
+                            Expanded(child: Container(height: 3, color: saffron)),
+                            Expanded(child: Container(height: 3, color: warmWhite)),
+                            Expanded(child: Container(height: 3, color: indiaGreen)),
                           ],
                         ),
                         const SizedBox(height: 10),
@@ -557,11 +345,11 @@ class _CorporatorDashboardState extends State<CorporatorDashboard>
                 ),
               ),
 
-              // Profile content
+              // Profile content via Spring Boot API
               Padding(
                 padding: const EdgeInsets.all(18),
-                child: FutureBuilder<Map<String, dynamic>?>(
-                  future: fetchCurrentUserData(),
+                child: FutureBuilder<Map<String, dynamic>>(
+                  future: _corporatorServices.getCorporatorProfile(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const SizedBox(
@@ -571,17 +359,30 @@ class _CorporatorDashboardState extends State<CorporatorDashboard>
                         ),
                       );
                     }
-                    if (!snapshot.hasData || snapshot.data == null) {
-                      return const Text(
-                        "User data not found",
-                        style: TextStyle(color: Colors.grey),
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Column(
+                          children: [
+                            const Icon(Icons.error_outline, color: Colors.red),
+                            const SizedBox(height: 8),
+                            Text(
+                              snapshot.error.toString().replaceAll("Exception: ", ""),
+                              style: const TextStyle(color: Colors.red, fontSize: 12),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
                       );
+                    }
+                    if (!snapshot.hasData || snapshot.data == null) {
+                      return const Text("No profile data found", style: TextStyle(color: Colors.grey));
                     }
 
                     final userData = snapshot.data!;
-                    final name = userData['name'] ?? '';
-                    final email = userData['email'] ?? '';
-                    final mobileNo = userData['mobileNo'] ?? '';
+                    // Mapping variables to match our Spring Boot DTO fields
+                    final name = userData['name'] ?? 'Unknown Name';
+                    final email = userData['email'] ?? 'Unknown Email';
+                    final mobileNo = userData['mobileNumber'] ?? 'Unknown Mobile'; 
 
                     return Row(
                       crossAxisAlignment: CrossAxisAlignment.center,

@@ -10,31 +10,47 @@ class AuthService {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   Future<bool> login(String username, String password) async {
-    final url = Uri.parse('${Constants.baseUrl}${Constants.loginEndpoint}');
+    final url = Uri.parse('${Constants.ngrokBaseUrl}${Constants.loginEndpoint}');
 
     try {
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'username': username, // Can be email or mobile based on our backend
+          'username': username, 
           'password': password,
         }),
       );
 
+      // 1. First, check if the server actually responded with a 200 OK
       if (response.statusCode == 200) {
+        // 2. Decode the raw string body into a Dart Map
         final Map<String, dynamic> responseBody = jsonDecode(response.body);
 
-        // Check our custom 'success' flag from Spring Boot
+        // 3. NOW you can check for your custom 'success' flag
         if (responseBody['success'] == true) {
+          // 4. Pass the DECODED body, not the raw response
           final authData = AuthResponse.fromJson(responseBody);
 
-          // Save the token and role securely on the device
+          print('🔍 DEBUG 1: Token from Backend: ${authData.token}');
+          print('🔍 DEBUG 2: ID from Backend: ${authData.id}');
+
+          if (authData.id.isEmpty || authData.id == "null") {
+            print('❌ Login Blocked: Backend did not return a valid User ID.');
+            return false; 
+          }
+
+          // Save to storage
           await _storage.write(key: 'jwt_token', value: authData.token);
           await _storage.write(key: 'user_role', value: authData.role);
           await _storage.write(key: 'user_id', value: authData.id);
 
-          debugPrint('Login Success! Role: ${authData.role}');
+          // Verify it actually saved!
+          final savedToken = await _storage.read(key: 'jwt_token');
+          final savedId = await _storage.read(key: 'user_id');
+          print('🔍 DEBUG 3: Token in Storage: $savedToken');
+          print('🔍 DEBUG 4: ID in Storage: $savedId');
+
           return true;
         }
       }

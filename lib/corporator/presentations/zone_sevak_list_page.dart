@@ -1,153 +1,19 @@
-// import 'package:corporator_app/core/widgets/appbar.dart';
-// import 'package:corporator_app/corporator/presentations/edit_admin_page.dart';
-// import 'package:corporator_app/corporator/services/corporator_service.dart';
-// import 'package:flutter/material.dart';
-
-// class AdminListPage extends StatefulWidget {
-//   const AdminListPage({super.key});
-
-//   @override
-//   State<AdminListPage> createState() => _AdminListPageState();
-// }
-
-// class _AdminListPageState extends State<AdminListPage> {
-//   final CorporatorService _corporatorService = CorporatorService();
-//   late Future<List<Map<String, dynamic>>> _adminsFuture;
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     _loadAdmins();
-//   }
-
-//   void _loadAdmins() {
-//     _adminsFuture = _corporatorService.fetchMyAdmins();
-//   }
-
-//   Future<void> _refreshAdmins() async {
-//     setState(() {
-//       _loadAdmins();
-//     });
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text("Admins"),
-//         actions: [
-//           IconButton(
-//             icon: const Icon(Icons.refresh),
-//             onPressed: _refreshAdmins,
-//           ),
-//         ],
-//       ),
-//       body: FutureBuilder<List<Map<String, dynamic>>>(
-//         future: _adminsFuture,
-//         builder: (context, snapshot) {
-//           if (snapshot.connectionState == ConnectionState.waiting) {
-//             return const Center(child: CircularProgressIndicator());
-//           }
-
-//           if (!snapshot.hasData || snapshot.data!.isEmpty) {
-//             return const Center(child: Text("No admins found"));
-//           }
-
-//           final admins = snapshot.data!;
-
-//           return ListView.builder(
-//             padding: const EdgeInsets.all(12),
-//             itemCount: admins.length,
-//             itemBuilder: (context, index) {
-//               final admin = admins[index];
-//               final name = admin['name'] ?? 'No Name';
-//               final email = admin['email'] ?? 'No Email';
-//               final mobile = admin['mobile'] ?? 'No Mobile';
-//               final location = admin['location'] ?? 'No Location';
-
-//               return Card(
-//                 elevation: 4,
-//                 shape: RoundedRectangleBorder(
-//                   borderRadius: BorderRadius.circular(12),
-//                 ),
-//                 margin: const EdgeInsets.symmetric(vertical: 8),
-//                 child: Stack(
-//                   children: [
-//                     Padding(
-//                       padding: const EdgeInsets.all(16),
-//                       child: Column(
-//                         crossAxisAlignment: CrossAxisAlignment.start,
-//                         children: [
-//                           Text(
-//                             name,
-//                             style: const TextStyle(
-//                               fontSize: 20,
-//                               fontWeight: FontWeight.bold,
-//                             ),
-//                           ),
-//                           const SizedBox(height: 8),
-//                           _infoRow(Icons.email, email),
-//                           _infoRow(Icons.phone, mobile),
-//                           _infoRow(Icons.location_on, location),
-//                         ],
-//                       ),
-//                     ),
-//                     Positioned(
-//                       right: 0,
-//                       top: 0,
-//                       child: IconButton(
-//                         icon: const Icon(Icons.edit, color: Colors.blue),
-//                         onPressed: () async {
-//                           await Navigator.push(
-//                             context,
-//                             MaterialPageRoute(
-//                               builder: (_) => EditAdminPage(admin: admin),
-//                             ),
-//                           );
-//                           _refreshAdmins();
-//                         },
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//               );
-//             },
-//           );
-//         },
-//       ),
-//     );
-//   }
-
-//   Widget _infoRow(IconData icon, String text) {
-//     return Padding(
-//       padding: const EdgeInsets.only(bottom: 4),
-//       child: Row(
-//         children: [
-//           Icon(icon, size: 18, color: Colors.grey),
-//           const SizedBox(width: 6),
-//           Text(text),
-//         ],
-//       ),
-//     );
-//   }
-// }
-import 'package:corporator_app/core/widgets/appbar.dart';
-import 'package:corporator_app/corporator/presentations/edit_admin_page.dart';
-import 'package:corporator_app/corporator/services/corporator_service.dart';
+import 'package:corporator_app/corporator/presentations/edit_zone_sevak_page.dart';
+import 'package:corporator_app/services/zone_sevak_service.dart';
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
-class AdminListPage extends StatefulWidget {
-  const AdminListPage({super.key});
+class ZoneSevakListPage extends StatefulWidget {
+  const ZoneSevakListPage({super.key});
 
   @override
-  State<AdminListPage> createState() => _AdminListPageState();
+  State<ZoneSevakListPage> createState() => _ZoneSevakListPageState();
 }
 
-class _AdminListPageState extends State<AdminListPage>
+class _ZoneSevakListPageState extends State<ZoneSevakListPage>
     with TickerProviderStateMixin {
-  final CorporatorService _corporatorService = CorporatorService();
-  late Future<List<Map<String, dynamic>>> _adminsFuture;
+  final ZoneSevakService _zoneSevakService = ZoneSevakService();
+  late Future<List<Map<String, dynamic>>> _sevaksFuture;
 
   AnimationController? _pulseController;
   Animation<double>? _pulseAnimation;
@@ -164,7 +30,7 @@ class _AdminListPageState extends State<AdminListPage>
   @override
   void initState() {
     super.initState();
-    _loadAdmins();
+    _loadSevaks();
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1400),
@@ -180,18 +46,17 @@ class _AdminListPageState extends State<AdminListPage>
     super.dispose();
   }
 
-  void _loadAdmins() {
-    _adminsFuture = _corporatorService.fetchMyAdmins();
+  void _loadSevaks() {
+    _sevaksFuture = _zoneSevakService.fetchMyZoneSevaks();
   }
 
-  Future<void> _refreshAdmins() async {
+  Future<void> _refreshSevaks() async {
     setState(() {
-      _loadAdmins();
+      _loadSevaks();
     });
   }
 
-  // Assign a consistent accent color per admin index
-  Color _adminColor(int index) {
+  Color _sevakColor(int index) {
     const colors = [
       saffron,
       ashoka,
@@ -209,7 +74,6 @@ class _AdminListPageState extends State<AdminListPage>
 
     return Scaffold(
       backgroundColor: darkNavy,
-      // ── Custom AppBar ──
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(64),
         child: Container(
@@ -228,7 +92,6 @@ class _AdminListPageState extends State<AdminListPage>
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: Row(
                 children: [
-                  // Back
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
                     child: Container(
@@ -249,13 +112,12 @@ class _AdminListPageState extends State<AdminListPage>
                     ),
                   ),
                   const SizedBox(width: 14),
-                  // Title
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "प्रशासक सूची",
+                      children: const [
+                        Text(
+                          "ज़ोन सेवक सूची",
                           style: TextStyle(
                             color: Color(0xFFFFD580),
                             fontSize: 10,
@@ -263,8 +125,8 @@ class _AdminListPageState extends State<AdminListPage>
                             letterSpacing: 1.5,
                           ),
                         ),
-                        const Text(
-                          "ADMIN DIRECTORY",
+                        Text(
+                          "ZONE SEVAK DIRECTORY",
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 16,
@@ -275,11 +137,10 @@ class _AdminListPageState extends State<AdminListPage>
                       ],
                     ),
                   ),
-                  // Refresh button
                   ScaleTransition(
                     scale: pulse,
                     child: GestureDetector(
-                      onTap: _refreshAdmins,
+                      onTap: _refreshSevaks,
                       child: Container(
                         width: 42,
                         height: 42,
@@ -310,7 +171,6 @@ class _AdminListPageState extends State<AdminListPage>
           ),
         ),
       ),
-
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -327,19 +187,16 @@ class _AdminListPageState extends State<AdminListPage>
             ),
             Column(
               children: [
-                // Top saffron strip
                 Container(
                   height: 4,
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(colors: [saffron, gold, saffron]),
                   ),
                 ),
-
                 Expanded(
                   child: FutureBuilder<List<Map<String, dynamic>>>(
-                    future: _adminsFuture,
+                    future: _sevaksFuture,
                     builder: (context, snapshot) {
-                      // ── Loading ──
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return Center(
                           child: Column(
@@ -382,29 +239,28 @@ class _AdminListPageState extends State<AdminListPage>
                         );
                       }
 
-                      // ── Empty ──
                       if (!snapshot.hasData || snapshot.data!.isEmpty) {
                         return Center(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
-                            children: [
+                            children: const [
                               Icon(
                                 Icons.people_outline,
                                 color: Colors.white24,
                                 size: 72,
                               ),
-                              const SizedBox(height: 16),
-                              const Text(
-                                "कोई एडमिन नहीं मिला",
+                              SizedBox(height: 16),
+                              Text(
+                                "कोई सेवक नहीं मिला",
                                 style: TextStyle(
                                   color: Colors.white54,
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
-                              const SizedBox(height: 4),
-                              const Text(
-                                "No admins found",
+                              SizedBox(height: 4),
+                              Text(
+                                "No Zone Sevaks found",
                                 style: TextStyle(
                                   color: Colors.white30,
                                   fontSize: 13,
@@ -415,21 +271,18 @@ class _AdminListPageState extends State<AdminListPage>
                         );
                       }
 
-                      final admins = snapshot.data!;
+                      final sevaks = snapshot.data!;
 
                       return Column(
                         children: [
-                          // ── Count banner ──
-                          _buildCountBanner(admins.length),
-
-                          // ── List ──
+                          _buildCountBanner(sevaks.length),
                           Expanded(
                             child: ListView.builder(
                               padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
-                              itemCount: admins.length,
+                              itemCount: sevaks.length,
                               itemBuilder: (context, index) {
-                                final admin = admins[index];
-                                return _buildAdminCard(admin, index);
+                                final sevak = sevaks[index];
+                                return _buildSevakCard(sevak, index);
                               },
                             ),
                           ),
@@ -467,11 +320,7 @@ class _AdminListPageState extends State<AdminListPage>
                 BoxShadow(color: gold.withOpacity(0.4), blurRadius: 10),
               ],
             ),
-            child: const Icon(
-              Icons.admin_panel_settings,
-              color: darkNavy,
-              size: 22,
-            ),
+            child: const Icon(Icons.badge, color: darkNavy, size: 22),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -479,7 +328,7 @@ class _AdminListPageState extends State<AdminListPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  "REGISTERED ADMINS",
+                  "REGISTERED SEVAKS",
                   style: TextStyle(
                     color: gold,
                     fontSize: 10,
@@ -488,7 +337,7 @@ class _AdminListPageState extends State<AdminListPage>
                   ),
                 ),
                 Text(
-                  "$count अधिकारी कार्यरत हैं",
+                  "$count सेवक कार्यरत हैं",
                   style: const TextStyle(
                     color: Colors.white70,
                     fontSize: 13,
@@ -522,12 +371,21 @@ class _AdminListPageState extends State<AdminListPage>
     );
   }
 
-  Widget _buildAdminCard(Map<String, dynamic> admin, int index) {
-    final name = admin['name'] ?? 'No Name';
-    final email = admin['email'] ?? 'No Email';
-    final mobile = admin['mobile'] ?? 'No Mobile';
-    final location = admin['location'] ?? 'No Location';
-    final accentColor = _adminColor(index);
+  Widget _buildSevakCard(Map<String, dynamic> sevak, int index) {
+    // ── Safe JSON Extraction based on Spring Boot DTO ──
+    final name = sevak['name'] ?? 'No Name';
+    final nickname = sevak['nickname'] ?? '';
+    final email = sevak['email'] ?? 'No Email';
+    final mobile = sevak['mobileNumber'] ?? 'No Mobile';
+    final photoUrl = sevak['livePhotoUrl']?.toString();
+
+    // Safely extract zone IDs (shows count of assigned zones)
+    final List<dynamic> zoneIds = sevak['zoneIds'] ?? [];
+    final locationText = zoneIds.isNotEmpty
+        ? "${zoneIds.length} Zones Assigned"
+        : "No Zones Assigned";
+
+    final accentColor = _sevakColor(index);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
@@ -535,7 +393,6 @@ class _AdminListPageState extends State<AdminListPage>
         borderRadius: BorderRadius.circular(16),
         child: Stack(
           children: [
-            // Card body
             Container(
               color: warmWhite,
               child: Padding(
@@ -543,33 +400,44 @@ class _AdminListPageState extends State<AdminListPage>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Header row ──
                     Row(
                       children: [
-                        // Avatar circle
+                        // Avatar circle (Uses Live Photo if available)
                         Container(
                           width: 46,
                           height: 46,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            gradient: RadialGradient(
-                              colors: [
-                                accentColor.withOpacity(0.3),
-                                accentColor.withOpacity(0.1),
-                              ],
-                            ),
                             border: Border.all(color: accentColor, width: 2),
+                            image: photoUrl != null && photoUrl.isNotEmpty
+                                ? DecorationImage(
+                                    image: NetworkImage(photoUrl),
+                                    fit: BoxFit.cover,
+                                  )
+                                : null,
+                            gradient: photoUrl == null || photoUrl.isEmpty
+                                ? RadialGradient(
+                                    colors: [
+                                      accentColor.withOpacity(0.3),
+                                      accentColor.withOpacity(0.1),
+                                    ],
+                                  )
+                                : null,
                           ),
-                          child: Center(
-                            child: Text(
-                              name.isNotEmpty ? name[0].toUpperCase() : "A",
-                              style: TextStyle(
-                                color: accentColor,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                          ),
+                          child: photoUrl == null || photoUrl.isEmpty
+                              ? Center(
+                                  child: Text(
+                                    name.isNotEmpty
+                                        ? name[0].toUpperCase()
+                                        : "Z",
+                                    style: TextStyle(
+                                      color: accentColor,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                )
+                              : null,
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -585,7 +453,9 @@ class _AdminListPageState extends State<AdminListPage>
                                 ),
                               ),
                               Text(
-                                "ADMIN OFFICER",
+                                nickname.isNotEmpty
+                                    ? "ZONE SEVAK ($nickname)"
+                                    : "ZONE SEVAK",
                                 style: TextStyle(
                                   color: accentColor,
                                   fontSize: 9,
@@ -596,16 +466,20 @@ class _AdminListPageState extends State<AdminListPage>
                             ],
                           ),
                         ),
-                        // Edit button
                         GestureDetector(
                           onTap: () async {
-                            await Navigator.push(
+                            // 1. Navigate to the Edit Page and pass the specific sevak data
+                            final bool? wasUpdated = await Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => EditAdminPage(admin: admin),
+                                builder: (_) => EditZoneSevakPage(sevak: sevak),
                               ),
                             );
-                            _refreshAdmins();
+
+                            // 2. If the user successfully updated and popped back with 'true', refresh the list
+                            if (wasUpdated == true) {
+                              _refreshSevaks();
+                            }
                           },
                           child: Container(
                             padding: const EdgeInsets.all(9),
@@ -633,8 +507,6 @@ class _AdminListPageState extends State<AdminListPage>
                     ),
 
                     const SizedBox(height: 12),
-
-                    // Gradient divider
                     Container(
                       height: 1,
                       decoration: BoxDecoration(
@@ -646,21 +518,21 @@ class _AdminListPageState extends State<AdminListPage>
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 10),
 
-                    // ── Info rows ──
                     _infoTile(Icons.email_outlined, "EMAIL", email),
                     const SizedBox(height: 6),
                     _infoTile(Icons.phone_outlined, "MOBILE", mobile),
                     const SizedBox(height: 6),
-                    _infoTile(Icons.location_on_outlined, "LOCATION", location),
+                    _infoTile(
+                      Icons.location_on_outlined,
+                      "ASSIGNMENT",
+                      locationText,
+                    ),
                   ],
                 ),
               ),
             ),
-
-            // Left accent strip
             Positioned(
               left: 0,
               top: 0,

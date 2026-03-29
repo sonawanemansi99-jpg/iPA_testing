@@ -1,29 +1,13 @@
 import 'dart:convert';
-import 'dart:io';
+import 'package:corporator_app/core/constants/constants.dart';
+import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import '../core/constants/constants.dart';
-class SuperadminServices {
+
+class SuperAdminService {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
-  Future<String> uploadLivePhotoToCloudinary(File imageFile) async {
-    final uri = Uri.parse("https://api.cloudinary.com/v1_1/${Constants.cloudName}/image/upload");
-
-    final request = http.MultipartRequest('POST', uri)
-      ..fields['upload_preset'] = Constants.uploadPreset
-      ..files.add(await http.MultipartFile.fromPath('file', imageFile.path));
-
-    final response = await request.send();
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final responseData = await response.stream.bytesToString();
-      final jsonMap = jsonDecode(responseData);
-      return jsonMap['secure_url']; // Return the Cloudinary URL
-    } else {
-      throw Exception("Failed to upload image to Cloudinary");
-    }
-  }
-
+  // ── Register Corporator (Admin) ──
   Future<void> registerCorporator({
     required String nickname,
     required String name,
@@ -34,9 +18,6 @@ class SuperadminServices {
     required String area,
     required String adharNo,
   }) async {
-    final url = Uri.parse('${Constants.baseUrl}/admins'); // Assuming your controller maps to /admins
-
-    // 1. Fetch JWT and the logged-in SuperAdmin's ID from secure storage
     final String? token = await _storage.read(key: 'jwt_token');
     final String? superAdminIdStr = await _storage.read(key: 'user_id');
 
@@ -45,8 +26,10 @@ class SuperadminServices {
     }
 
     final int parsedSuperAdminId = int.tryParse(superAdminIdStr) ?? 1;
+    
+    // Using standardized Ngrok Base URL
+    final url = Uri.parse('${Constants.ngrokBaseUrl}${Constants.adminEndpoint}'); 
 
-    // 2. Prepare the payload exactly matching the Spring Boot DTO
     final Map<String, dynamic> payload = {
       "nickname": nickname,
       "name": name,
@@ -56,30 +39,39 @@ class SuperadminServices {
       "livePhotoUrl": livePhotoUrl,
       "area": area,
       "adharNo": adharNo,
-      "superAdminId": parsedSuperAdminId, // Converted to Long for Spring Boot
+      "superAdminId": parsedSuperAdminId, // Kept this if your Spring Boot DTO still requires it
     };
 
-    // 3. Make the API Call with the JWT
-    final response = await http.post(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token', // PASSING THE JWT HERE!
-      },
-      body: jsonEncode(payload),
-    );
+    try {
+      debugPrint("Registering Corporator at: $url");
 
-    // 4. Handle the Response
-    if (response.statusCode == 201 || response.statusCode == 200) {
-      final responseData = jsonDecode(response.body);
-      if (responseData['success'] == true) {
-        return; // Success!
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+          'ngrok-skip-browser-warning': '69420', // Crucial for Ngrok bypass
+        },
+        body: jsonEncode(payload),
+      );
+
+      debugPrint("Response Status (Register): ${response.statusCode}");
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        if (responseData['success'] == true) {
+          return; // Success!
+        } else {
+          throw Exception(responseData['message'] ?? "Failed to create corporator.");
+        }
       } else {
-        throw Exception(responseData['message'] ?? "Failed to create corporator");
+        // Safe error extraction in case backend sends an error map
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['message'] ?? "Server error: ${response.statusCode}");
       }
-    } else {
-      final errorData = jsonDecode(response.body);
-      throw Exception(errorData['message'] ?? "Server error: ${response.statusCode}");
+    } catch (e) {
+      debugPrint("Registration Error: $e");
+      throw Exception(e.toString().replaceAll("Exception: ", ""));
     }
   }
 }
