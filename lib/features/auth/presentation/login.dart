@@ -1,5 +1,4 @@
-import 'package:corporator_app/features/auth/presentation/forgot_password_page.dart';
-import 'package:corporator_app/features/complaints/presentation/screens/list_complaints.dart';
+import 'package:corporator_app/features/complaints/presentation/screens/zone_sevak_complaints_page.dart';
 import 'package:corporator_app/corporator/presentations/corporator_dashboard.dart';
 import 'package:corporator_app/services/auth_service.dart';
 import 'package:corporator_app/superadmin/presentation/pages/register_corporator.dart';
@@ -123,7 +122,7 @@ Future<void> loginUser() async {
     } else if (role == "ROLE_ZONE_SEVAK") {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => ListComplaints(adminId: uid)), // Or SevakDashboard
+        MaterialPageRoute(builder: (_) => ZoneSevakComplaintsPage()), // Or SevakDashboard
       );
     } else {
       throw Exception("Unknown role received: $role");

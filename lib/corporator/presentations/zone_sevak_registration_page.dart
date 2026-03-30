@@ -152,7 +152,7 @@ class _ZoneSevakRegistrationPageState extends State<ZoneSevakRegistrationPage> w
       await _zoneSevakServices.createZoneSevak(
         nickname:     nicknameController.text.trim(),
         name:         nameController.text.trim(),
-        mobileNo:     mobileController.text.trim(),
+        mobileNumber:     mobileController.text.trim(),
         email:        emailController.text.trim(),
         password:     passwordController.text.trim(),
         livePhotoUrl: _uploadedPhotoUrl!,

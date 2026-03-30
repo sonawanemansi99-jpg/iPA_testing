@@ -51,7 +51,7 @@ class ZoneSevakService {
   Future<void> createZoneSevak({
     required String nickname,
     required String name,
-    required String mobileNo,
+    required String mobileNumber,
     required String email,
     required String password,
     required String livePhotoUrl,
@@ -62,13 +62,11 @@ class ZoneSevakService {
 
     if (token == null) throw Exception("Authentication error. Please log in again.");
 
-    final url = Uri.parse('${Constants.ngrokBaseUrl}/zone-sevaks');
-
-    // SECURITY UPGRADE: We no longer send 'adminId' from the frontend!
+    final url = Uri.parse('${Constants.ngrokBaseUrl}${Constants.zoneSevakEndpoint}');
     final Map<String, dynamic> payload = {
       "nickname": nickname,
       "name": name,
-      "mobileNumber": mobileNo,
+      "mobileNumber": mobileNumber,
       "email": email,
       "password": password,
       "livePhotoUrl": livePhotoUrl,
@@ -87,8 +85,16 @@ class ZoneSevakService {
     );
 
     if (response.statusCode != 201 && response.statusCode != 200) {
+      debugPrint("RAW BACKEND RESPONSE: ${response.body}");
+      
       final responseData = jsonDecode(response.body);
-      throw Exception(responseData['message'] ?? "Failed to create Zone Sevak");
+      
+      if (responseData.containsKey('errors') && responseData['errors'] != null) {
+        final Map<String, dynamic> fieldErrors = responseData['errors'];
+        final errorMessage = fieldErrors.entries.map((e) => "${e.key}: ${e.value}").join('\n');
+        throw Exception(errorMessage);
+      }
+      throw Exception(responseData['message'] ?? "Unknown Server Error: ${response.statusCode}");
     }
   }
 
