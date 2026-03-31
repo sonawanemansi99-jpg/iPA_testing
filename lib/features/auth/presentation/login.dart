@@ -1,3 +1,5 @@
+import 'package:corporator_app/core/widgets/custom_snack_bar.dart';
+import 'package:corporator_app/superadmin/presentation/pages/super_admin_dashboard.dart';
 import 'package:corporator_app/features/complaints/presentation/screens/zone_sevak_complaints_page.dart';
 import 'package:corporator_app/corporator/presentations/corporator_dashboard.dart';
 import 'package:corporator_app/services/auth_service.dart';
@@ -88,31 +90,13 @@ Future<void> loginUser() async {
     if (!mounted) return;
 
     // 3. Show your beautiful Success SnackBar
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Row(
-          children: [
-            Icon(Icons.check_circle, color: Colors.white),
-            SizedBox(width: 10),
-            Text(
-              "जय हिन्द! Login Successful",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-        backgroundColor: saffron, // Replaced 'saffron' variable if not defined locally
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-    );
+    CustomSnackBar.showSuccess(context, "जय हिन्द! Login Successful");
 
     // 4. Route based on Spring Boot Roles
     if (role == "ROLE_SUPER_ADMIN") {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => CorporatorRegistrationPage()),
+        MaterialPageRoute(builder: (_) => SuperAdminDashboard()),
       );
     } else if (role == "ROLE_ADMIN") {
       Navigator.pushReplacement(

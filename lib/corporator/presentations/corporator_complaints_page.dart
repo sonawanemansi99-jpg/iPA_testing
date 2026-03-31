@@ -9,7 +9,8 @@ import 'dart:math' as math;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class CorporatorComplaintsPage extends StatefulWidget {
-  const CorporatorComplaintsPage({super.key});
+  final int? adminId;
+  const CorporatorComplaintsPage({super.key, this.adminId});
 
   @override
   State<CorporatorComplaintsPage> createState() => _CorporatorComplaintsPageState();
@@ -87,8 +88,8 @@ class _CorporatorComplaintsPageState extends State<CorporatorComplaintsPage> wit
       final storedName = await _storage.read(key: 'name') ?? 'Admin';
 
       final results = await Future.wait([
-        _complaintService.fetchComplaints(),
-        _zoneService.fetchMyZones(), 
+        _complaintService.fetchComplaints(adminId: widget.adminId),
+        _zoneService.fetchMyZones(adminId: widget.adminId), 
       ]);
 
       final complaintsData = results[0];
@@ -219,7 +220,7 @@ class _CorporatorComplaintsPageState extends State<CorporatorComplaintsPage> wit
     final Animation<double> pulseAnim = _pulseAnimation ?? const AlwaysStoppedAnimation(1.0);
 
     return MainScaffold(
-      title: "Complaint Inbox", // Clean, modern title
+      title: widget.adminId != null ? "Inspecting Complaints" : "Complaint Inbox", // Clean, modern title
       floatingActionButton: ScaleTransition(
         scale: isLoading ? pulseAnim : const AlwaysStoppedAnimation(1.0),
         child: FloatingActionButton(
@@ -607,7 +608,7 @@ class _CorporatorComplaintsPageState extends State<CorporatorComplaintsPage> wit
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Icon(Icons.photo_library_outlined, color: Colors.white, size: 14),
-                                    SizedBox(width: 6),
+                                    const SizedBox(width: 6),
                                     Text("PHOTOS", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
                                   ],
                                 ),

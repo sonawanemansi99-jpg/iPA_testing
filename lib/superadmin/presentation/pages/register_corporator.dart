@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:math' as math;
-import 'package:corporator_app/features/auth/presentation/login.dart';
 import 'package:corporator_app/services/media_service.dart';
 import 'package:corporator_app/services/super_admin_services.dart';
 import 'package:flutter/material.dart';
@@ -199,17 +198,6 @@ class _CorporatorRegistrationPageState
     }
   }
 
-  Future<void> logout() async {
-    try {
-      Navigator.pushReplacement(
-          context, MaterialPageRoute(builder: (_) => const Login()));
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Logout failed: $e")),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -281,20 +269,6 @@ class _CorporatorRegistrationPageState
                               letterSpacing: 2.5,
                             ),
                           ),
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: logout,
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.red.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                                color: Colors.red.withOpacity(0.5)),
-                          ),
-                          child: const Icon(Icons.logout_rounded,
-                              color: Colors.redAccent, size: 20),
                         ),
                       ),
                     ],

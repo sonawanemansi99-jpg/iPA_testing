@@ -6,8 +6,8 @@ import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
 class ZoneListPage extends StatefulWidget {
-  const ZoneListPage({super.key});
-
+  final int? adminId;
+  const ZoneListPage({Key? key, this.adminId}) : super(key: key);
   @override
   State<ZoneListPage> createState() => _ZoneListPageState();
 }
@@ -53,11 +53,11 @@ class _ZoneListPageState extends State<ZoneListPage> with TickerProviderStateMix
   Future<void> _loadDashboardData() async {
     setState(() { _isLoading = true; _error = null; });
     try {
-      // Fetch everything concurrently for maximum speed
+      // Fetch everything concurrently for maximum speed, passing adminId for Inspector Mode
       final results = await Future.wait([
-        _zoneService.fetchMyZones(),
-        _sevakService.fetchMyZoneSevaks(),
-        _complaintService.fetchComplaints(),
+        _zoneService.fetchMyZones(adminId: widget.adminId),
+        _sevakService.fetchMyZoneSevaks(adminId: widget.adminId),
+        _complaintService.fetchComplaints(adminId: widget.adminId),
       ]);
 
       final zones = results[0] as List<Map<String, dynamic>>;
@@ -111,9 +111,9 @@ class _ZoneListPageState extends State<ZoneListPage> with TickerProviderStateMix
                   child: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.white.withOpacity(0.08), borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white.withOpacity(0.15))), child: const Icon(Icons.arrow_back_ios_new, color: Colors.white70, size: 16)),
                 ),
                 const SizedBox(width: 14),
-                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: const [
-                  Text("ज़ोन सूची", style: TextStyle(color: Color(0xFFFFD580), fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.5)),
-                  Text("ZONE DIRECTORY", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 2)),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(widget.adminId != null ? "प्रशासक के ज़ोन" : "ज़ोन सूची", style: const TextStyle(color: Color(0xFFFFD580), fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.5)),
+                  Text(widget.adminId != null ? "INSPECTING ZONES" : "ZONE DIRECTORY", style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 2)),
                 ])),
                 ScaleTransition(scale: pulse,
                   child: GestureDetector(

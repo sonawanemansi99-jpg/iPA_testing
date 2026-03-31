@@ -7,45 +7,32 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 class ComplaintService {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
-  // ── Fetch Complaints for the Corporator's Group ──
-  Future<List<Map<String, dynamic>>> fetchComplaints() async {
+  // ── Fetch Complaints (Smart Routing) ──
+  Future<List<Map<String, dynamic>>> fetchComplaints({int? adminId}) async {
     final String? token = await _storage.read(key: 'jwt_token');
+    if (token == null) throw Exception("Authentication token missing.");
 
-    if (token == null || token.trim().isEmpty) {
-      throw Exception("Authentication token missing. Please log in again.");
-    }
+    final String endpoint = adminId != null 
+        ? '${Constants.ngrokBaseUrl}/complaints/admin/$adminId'
+        : '${Constants.ngrokBaseUrl}${Constants.complaintsEndpoint}';
 
-    final url = Uri.parse('${Constants.ngrokBaseUrl}${Constants.complaintsEndpoint}');
+    final url = Uri.parse(endpoint);
 
     try {
-      debugPrint("Fetching Complaints from: $url");
-
-      final response = await http.get(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-          'ngrok-skip-browser-warning': '69420',
-        },
-      );
-
-      debugPrint("Response Status (Complaints): ${response.statusCode}");
+      final response = await http.get(url, headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+        'ngrok-skip-browser-warning': '69420',
+      });
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
-        
         if (responseData['success'] == true) {
-          final List<dynamic> data = responseData['data'];
-          // Return raw maps instead of a rigid model
-          return List<Map<String, dynamic>>.from(data);
-        } else {
-          throw Exception(responseData['message'] ?? "Failed to fetch complaints");
+          return List<Map<String, dynamic>>.from(responseData['data']);
         }
-      } else {
-        throw Exception("Server Error ${response.statusCode}: ${response.body}");
       }
+      throw Exception("Failed to fetch complaints");
     } catch (e) {
-      debugPrint("Complaint Fetch Error: $e");
       throw Exception(e.toString().replaceAll("Exception: ", ""));
     }
   }

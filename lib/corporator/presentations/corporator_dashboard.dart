@@ -3,9 +3,12 @@ import 'package:corporator_app/core/widgets/main_scaffold.dart';
 import 'package:corporator_app/corporator/presentations/zone_sevak_list_page.dart';
 import 'package:corporator_app/corporator/presentations/corporator_complaints_page.dart';
 import 'package:corporator_app/corporator/presentations/create_zone_page.dart';
-import 'package:corporator_app/corporator/presentations/zone_list_page.dart'; // Added this import
+import 'package:corporator_app/corporator/presentations/zone_list_page.dart';
 import 'package:corporator_app/corporator/presentations/zone_sevak_registration_page.dart';
-import 'package:corporator_app/features/auth/presentation/login.dart';  
+import 'package:corporator_app/features/auth/presentation/login.dart';
+// 👇 Added the QR Download Page import
+import 'package:corporator_app/features/QR/corporator_qr_download_page.dart';
+import 'package:corporator_app/landing_page.dart';
 import 'package:corporator_app/services/admin_services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter/material.dart';
@@ -59,6 +62,10 @@ class _CorporatorDashboardState extends State<CorporatorDashboard>
   // ── SPRING BOOT SERVICE REPLACES FIREBASE ──
   final AdminServices _corporatorServices = AdminServices();
 
+  Map<String, dynamic>? _adminProfile;
+  bool _isLoadingProfile = true;
+  String? _profileError;
+
   AnimationController? _pulseController;
   Animation<double>? _pulseAnimation;
   AnimationController? _shimmerController;
@@ -74,6 +81,8 @@ class _CorporatorDashboardState extends State<CorporatorDashboard>
   @override
   void initState() {
     super.initState();
+    _fetchProfileData();
+
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1600),
@@ -94,6 +103,30 @@ class _CorporatorDashboardState extends State<CorporatorDashboard>
     super.dispose();
   }
 
+  // Elevate the profile fetch so the whole dashboard knows if it's active
+  Future<void> _fetchProfileData() async {
+    setState(() {
+      _isLoadingProfile = true;
+      _profileError = null;
+    });
+    try {
+      final data = await _corporatorServices.getCorporatorProfile();
+      if (mounted) {
+        setState(() {
+          _adminProfile = data;
+          _isLoadingProfile = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _profileError = e.toString().replaceAll("Exception: ", "");
+          _isLoadingProfile = false;
+        });
+      }
+    }
+  }
+
   void adminList() {
     Navigator.push(
       context,
@@ -106,7 +139,7 @@ class _CorporatorDashboardState extends State<CorporatorDashboard>
     if (!mounted) return;
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const Login()),
+      MaterialPageRoute(builder: (_) => const LandingPage()),
     );
   }
 
@@ -115,9 +148,12 @@ class _CorporatorDashboardState extends State<CorporatorDashboard>
     final Animation<double> pulse =
         _pulseAnimation ?? const AlwaysStoppedAnimation(1.0);
 
+    // Default to true to prevent accidental lockouts if data is missing, 
+    // but correctly lock down if backend explicitly returns false.
+    final bool isActive = _adminProfile?['isActive'] ?? true;
+
     return MainScaffold(
       title: "Dashboard",
-      // Optional: Add a logout button to the app bar if MainScaffold supports actions
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -143,140 +179,144 @@ class _CorporatorDashboardState extends State<CorporatorDashboard>
                 ),
 
                 Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 40),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // ── Corporator Profile Card ──
-                        _buildProfileCard(pulse),
-
-                        const SizedBox(height: 20),
-
-                        // ── Seva Slogan Banner ──
-                        _buildSloganBanner(),
-
-                        const SizedBox(height: 24),
-
-                        // ── Section Label ──
-                        _buildSectionLabel(
-                          "प्रशासन पैनल",
-                          "ADMINISTRATION PANEL",
-                        ),
-
-                        const SizedBox(height: 14),
-
-                        // ── Action Buttons ──
-                        // Remember: In backend terminology, these are Zone Sevaks!
-                        _buildActionButton(
-                          icon: Icons.admin_panel_settings,
-                          hindi: "सभी ज़ोन सेवक देखें", // Translated to Zone Sevak
-                          english: "VIEW ALL ZONE SEVAKS",
-                          color: navyBlue,
-                          accentColor: gold,
-                          onTap: adminList,
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        _buildActionButton(
-                          icon: Icons.person_add_alt_1,
-                          hindi: "नया ज़ोन सेवक जोड़ें",
-                          english: "ADD NEW ZONE SEVAK",
-                          color: saffron,
-                          accentColor: Colors.white,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const ZoneSevakRegistrationPage(),
-                              ),
-                            );
-                          },
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        _buildActionButton(
-                          icon: Icons.list_alt_outlined,
-                          hindi: "शिकायतें देखें",
-                          english: "VIEW COMPLAINTS",
-                          color: const Color(0xFF1A6FAB), 
-                          accentColor: Colors.white,
-                          onTap: () async {
-                            final storage = const FlutterSecureStorage();
-                            final uid = await storage.read(key: 'user_id') ?? '';
-                            if (!mounted) return;
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const CorporatorComplaintsPage(),
-                              ),
-                            );
-                          },
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        // ── NEW: View All Zones Button ──
-                        _buildActionButton(
-                          icon: Icons.map_outlined,
-                          hindi: "सभी ज़ोन देखें",
-                          english: "VIEW ALL ZONES",
-                          color: indiaGreen,
-                          accentColor: Colors.white,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const ZoneListPage(),
-                              ),
-                            );
-                          },
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        _buildActionButton(
-                          icon: Icons.add_location_alt_outlined,
-                          hindi: "नया ज़ोन बनाएं",
-                          english: "CREATE NEW ZONE",
-                          color: const Color(0xFF004B87), // A distinct deeper blue
-                          accentColor: Colors.white,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const CreateZonePage(),
-                              ),
-                            );
-                          },
-                        ),
-
-                        const SizedBox(height: 28),
-
-                        // ── Footer tricolor ──
-                        Row(
+                  child: _isLoadingProfile 
+                    ? const Center(child: CircularProgressIndicator(color: saffron))
+                    : SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(16, 20, 16, 40),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(child: Container(height: 3, color: saffron)),
-                            Expanded(child: Container(height: 3, color: warmWhite)),
-                            Expanded(child: Container(height: 3, color: indiaGreen)),
+                            // ── Corporator Profile Card ──
+                            _buildProfileCard(pulse, isActive),
+
+                            const SizedBox(height: 20),
+
+                            // ── Seva Slogan Banner ──
+                            _buildSloganBanner(isActive),
+
+                            const SizedBox(height: 24),
+
+                            // ── CONDITIONAL RENDERING FOR SUSPENDED ADMINS ──
+                            if (isActive) ...[
+                              _buildSectionLabel(
+                                "प्रशासन पैनल",
+                                "ADMINISTRATION PANEL",
+                              ),
+                              const SizedBox(height: 14),
+
+                              _buildActionButton(
+                                icon: Icons.admin_panel_settings,
+                                hindi: "सभी ज़ोन सेवक देखें",
+                                english: "VIEW ALL ZONE SEVAKS",
+                                color: navyBlue,
+                                accentColor: gold,
+                                onTap: adminList,
+                              ),
+                              const SizedBox(height: 12),
+
+                              _buildActionButton(
+                                icon: Icons.person_add_alt_1,
+                                hindi: "नया ज़ोन सेवक जोड़ें",
+                                english: "ADD NEW ZONE SEVAK",
+                                color: saffron,
+                                accentColor: Colors.white,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => const ZoneSevakRegistrationPage()),
+                                  );
+                                },
+                              ),
+                              const SizedBox(height: 12),
+
+                              _buildActionButton(
+                                icon: Icons.list_alt_outlined,
+                                hindi: "शिकायतें देखें",
+                                english: "VIEW COMPLAINTS",
+                                color: const Color(0xFF1A6FAB), 
+                                accentColor: Colors.white,
+                                onTap: () async {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => const CorporatorComplaintsPage()),
+                                  );
+                                },
+                              ),
+                              const SizedBox(height: 12),
+
+                              _buildActionButton(
+                                icon: Icons.map_outlined,
+                                hindi: "सभी ज़ोन देखें",
+                                english: "VIEW ALL ZONES",
+                                color: indiaGreen,
+                                accentColor: Colors.white,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => const ZoneListPage()),
+                                  );
+                                },
+                              ),
+                              const SizedBox(height: 12),
+
+                              _buildActionButton(
+                                icon: Icons.add_location_alt_outlined,
+                                hindi: "नया ज़ोन बनाएं",
+                                english: "CREATE NEW ZONE",
+                                color: const Color(0xFF004B87), 
+                                accentColor: Colors.white,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => const CreateZonePage()),
+                                  );
+                                },
+                              ),
+                              const SizedBox(height: 12),
+
+                              // 👇 NEW: QR Download Button
+                              _buildActionButton(
+                                icon: Icons.qr_code_2,
+                                hindi: "क्यूआर कोड डाउनलोड करें",
+                                english: "DOWNLOAD QR CODE",
+                                color: Colors.teal.shade700, // Distinct utility color
+                                accentColor: Colors.white,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => const CorporatorQRDownloadPage()),
+                                  );
+                                },
+                              ),
+                            ] else ...[
+                              // ── LOCKED STATE UI ──
+                              _buildSuspendedNotice(),
+                            ],
+
+                            const SizedBox(height: 28),
+
+                            // ── Footer tricolor ──
+                            Row(
+                              children: [
+                                Expanded(child: Container(height: 3, color: saffron)),
+                                Expanded(child: Container(height: 3, color: warmWhite)),
+                                Expanded(child: Container(height: 3, color: indiaGreen)),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Center(
+                              child: Text(
+                                "© 2025 Corporator Portal  •  जनसेवा सर्वोपरि",
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.35),
+                                  fontSize: 10,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
                           ],
                         ),
-                        const SizedBox(height: 10),
-                        Center(
-                          child: Text(
-                            "© 2025 Corporator Portal  •  जनसेवा सर्वोपरि",
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.35),
-                              fontSize: 10,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                      ),
                 ),
               ],
             ),
@@ -286,7 +326,82 @@ class _CorporatorDashboardState extends State<CorporatorDashboard>
     );
   }
 
-  Widget _buildProfileCard(Animation<double> pulse) {
+  Widget _buildSuspendedNotice() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+      decoration: BoxDecoration(
+        color: Colors.red[900]?.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.red.withOpacity(0.6), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.red.withOpacity(0.15),
+            blurRadius: 15,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          const Icon(Icons.lock_person, color: Colors.redAccent, size: 52),
+          const SizedBox(height: 16),
+          const Text(
+            "ACCESS REVOKED",
+            style: TextStyle(
+              color: Colors.redAccent,
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 2,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            "Your administrative privileges have been suspended by the System Administrator. You can no longer view or manage zones, complaints, or zone sevaks.",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.8),
+              fontSize: 13,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: _logout,
+            icon: const Icon(Icons.logout, color: Colors.white, size: 18),
+            label: const Text("SIGN OUT", style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red[800],
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileCard(Animation<double> pulse, bool isActive) {
+    if (_profileError != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            children: [
+              const Icon(Icons.error_outline, color: Colors.red, size: 40),
+              const SizedBox(height: 8),
+              Text(_profileError!, style: const TextStyle(color: Colors.red, fontSize: 12), textAlign: TextAlign.center),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final name = _adminProfile?['name'] ?? 'Unknown Name';
+    final email = _adminProfile?['email'] ?? 'Unknown Email';
+    final mobileNo = _adminProfile?['mobileNumber'] ?? 'Unknown Mobile'; 
+
     return ScaleTransition(
       scale: pulse,
       child: Container(
@@ -295,7 +410,7 @@ class _CorporatorDashboardState extends State<CorporatorDashboard>
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: gold.withOpacity(0.3),
+              color: (isActive ? gold : Colors.red).withOpacity(0.3),
               blurRadius: 24,
               spreadRadius: 2,
             ),
@@ -310,22 +425,21 @@ class _CorporatorDashboardState extends State<CorporatorDashboard>
           borderRadius: BorderRadius.circular(20),
           child: Column(
             children: [
-              // Gold header
+              // Gold/Red header
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  vertical: 10,
-                  horizontal: 16,
-                ),
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(colors: [darkNavy, navyBlue]),
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: isActive ? [darkNavy, navyBlue] : [Colors.red[900]!, Colors.red[700]!]
+                  ),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      "CORPORATOR PROFILE",
-                      style: TextStyle(
+                    Text(
+                      isActive ? "CORPORATOR PROFILE" : "ACCOUNT SUSPENDED",
+                      style: const TextStyle(
                         color: gold,
                         fontSize: 11,
                         fontWeight: FontWeight.w900,
@@ -345,124 +459,92 @@ class _CorporatorDashboardState extends State<CorporatorDashboard>
                 ),
               ),
 
-              // Profile content via Spring Boot API
+              // Profile content
               Padding(
                 padding: const EdgeInsets.all(18),
-                child: FutureBuilder<Map<String, dynamic>>(
-                  future: _corporatorServices.getCorporatorProfile(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const SizedBox(
-                        height: 80,
-                        child: Center(
-                          child: CircularProgressIndicator(color: saffron),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Avatar with ring based on status
+                    Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: isActive ? [gold, saffron] : [Colors.red, Colors.red[900]!],
                         ),
-                      );
-                    }
-                    if (snapshot.hasError) {
-                      return Center(
-                        child: Column(
-                          children: [
-                            const Icon(Icons.error_outline, color: Colors.red),
-                            const SizedBox(height: 8),
-                            Text(
-                              snapshot.error.toString().replaceAll("Exception: ", ""),
-                              style: const TextStyle(color: Colors.red, fontSize: 12),
-                              textAlign: TextAlign.center,
+                        boxShadow: [
+                          BoxShadow(
+                            color: (isActive ? gold : Colors.red).withOpacity(0.5),
+                            blurRadius: 16,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.person,
+                        color: darkNavy,
+                        size: 38,
+                      ),
+                    ),
+
+                    const SizedBox(width: 16),
+
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Name with shimmer-style gradient
+                          ShaderMask(
+                            shaderCallback: (b) => LinearGradient(
+                              colors: isActive ? [darkNavy, navyBlue] : [Colors.red[900]!, Colors.red],
+                            ).createShader(b),
+                            child: Text(
+                              name,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                              ),
                             ),
-                          ],
-                        ),
-                      );
-                    }
-                    if (!snapshot.hasData || snapshot.data == null) {
-                      return const Text("No profile data found", style: TextStyle(color: Colors.grey));
-                    }
-
-                    final userData = snapshot.data!;
-                    // Mapping variables to match our Spring Boot DTO fields
-                    final name = userData['name'] ?? 'Unknown Name';
-                    final email = userData['email'] ?? 'Unknown Email';
-                    final mobileNo = userData['mobileNumber'] ?? 'Unknown Mobile'; 
-
-                    return Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // Avatar with gold ring
-                        Container(
-                          width: 72,
-                          height: 72,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: const RadialGradient(
-                              colors: [gold, saffron],
+                          ),
+                          const SizedBox(height: 8),
+                          _profileDetail(Icons.email_outlined, email),
+                          const SizedBox(height: 4),
+                          _profileDetail(Icons.phone_outlined, mobileNo),
+                          const SizedBox(height: 8),
+                          
+                          // Rank badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: isActive ? [saffron, deepSaffron] : [Colors.red, Colors.red[800]!],
+                              ),
+                              borderRadius: BorderRadius.circular(6),
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: gold.withOpacity(0.5),
-                                blurRadius: 16,
+                            child: Text(
+                              isActive ? "✦  CORPORATOR" : "✖  SUSPENDED",
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 2,
                               ),
-                            ],
+                            ),
                           ),
-                          child: const Icon(
-                            Icons.person,
-                            color: darkNavy,
-                            size: 38,
-                          ),
-                        ),
-
-                        const SizedBox(width: 16),
-
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Name with shimmer-style gold
-                              ShaderMask(
-                                shaderCallback: (b) => const LinearGradient(
-                                  colors: [darkNavy, navyBlue],
-                                ).createShader(b),
-                                child: Text(
-                                  name,
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w900,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              _profileDetail(Icons.email_outlined, email),
-                              const SizedBox(height: 4),
-                              _profileDetail(Icons.phone_outlined, mobileNo),
-                              const SizedBox(height: 8),
-                              // Rank badge
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    colors: [saffron, deepSaffron],
-                                  ),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: const Text(
-                                  "✦  CORPORATOR",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 2,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    );
-                  },
+                        ],
+                      ),
+                    ),
+                    
+                    // ── STYLED LOGOUT ICON BUTTON ──
+                    IconButton(
+                      icon: const Icon(Icons.logout, color: Colors.redAccent, size: 28),
+                      onPressed: _logout,
+                      tooltip: "Secure Logout",
+                      splashRadius: 24,
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -492,16 +574,18 @@ class _CorporatorDashboardState extends State<CorporatorDashboard>
     );
   }
 
-  Widget _buildSloganBanner() {
+  Widget _buildSloganBanner(bool isActive) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [saffron, deepSaffron]),
+        gradient: LinearGradient(
+          colors: isActive ? [saffron, deepSaffron] : [Colors.red[800]!, Colors.red[900]!]
+        ),
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-            color: saffron.withOpacity(0.45),
+            color: (isActive ? saffron : Colors.red).withOpacity(0.45),
             blurRadius: 14,
             offset: const Offset(0, 4),
           ),
@@ -509,20 +593,20 @@ class _CorporatorDashboardState extends State<CorporatorDashboard>
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Icon(Icons.star, color: Colors.white, size: 14),
-          SizedBox(width: 10),
+        children: [
+          Icon(isActive ? Icons.star : Icons.warning_amber_rounded, color: Colors.white, size: 14),
+          const SizedBox(width: 10),
           Text(
-            "सेवा • विकास • समर्पण",
-            style: TextStyle(
+            isActive ? "सेवा • विकास • समर्पण" : "ACCESS RESTRICTED",
+            style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w900,
               fontSize: 15,
               letterSpacing: 2.5,
             ),
           ),
-          SizedBox(width: 10),
-          Icon(Icons.star, color: Colors.white, size: 14),
+          const SizedBox(width: 10),
+          Icon(isActive ? Icons.star : Icons.warning_amber_rounded, color: Colors.white, size: 14),
         ],
       ),
     );

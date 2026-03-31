@@ -7,19 +7,19 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 class ZoneSevakService {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
-  // ── Fetch Zone Sevaks for Current Admin ──
-  Future<List<Map<String, dynamic>>> fetchMyZoneSevaks() async {
+  // ── Fetch Logged-In Zone Sevak Profile ──
+  Future<Map<String, dynamic>> getZoneSevakProfile() async {
     final String? token = await _storage.read(key: 'jwt_token');
+    final String? userIdStr = await _storage.read(key: 'user_id');
 
-    if (token == null || token.trim().isEmpty) {
-      throw Exception("Authentication token missing. Please log in again.");
+    if (token == null || userIdStr == null) {
+      throw Exception("Authentication data missing. Please log in again.");
     }
 
-    final url = Uri.parse('${Constants.ngrokBaseUrl}${Constants.zoneSevakEndpoint}');
+    // Call the GET /{id} endpoint on the controller
+    final url = Uri.parse('${Constants.ngrokBaseUrl}/zone-sevaks/$userIdStr');
 
     try {
-      debugPrint("Fetching Zone Sevaks from: $url");
-
       final response = await http.get(
         url,
         headers: {
@@ -29,20 +29,50 @@ class ZoneSevakService {
         },
       );
 
-      debugPrint("Response Status (Zone Sevaks): ${response.statusCode}");
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        if (responseData['success'] == true) {
+          return responseData['data'];
+        }
+      } else {
+        debugPrint("PROFILE FETCH FAILED. Status: ${response.statusCode}");
+        debugPrint("Body: ${response.body}");
+        throw Exception("Server returned ${response.statusCode}");
+      }
+      throw Exception("Failed to load profile data.");
+    } catch (e) {
+      throw Exception(e.toString().replaceAll("Exception: ", ""));
+    }
+  }
+
+  // ── Fetch Zone Sevaks (List) ──
+  Future<List<Map<String, dynamic>>> fetchMyZoneSevaks({int? adminId}) async {
+    final String? token = await _storage.read(key: 'jwt_token');
+    if (token == null) throw Exception("Authentication token missing.");
+    final String endpoint = adminId != null
+        ? '${Constants.ngrokBaseUrl}/zone-sevaks/admin/$adminId' // The Super Admin Inspector View
+        : '${Constants.ngrokBaseUrl}/zone-sevaks/me'; // The Admin's Own Dashboard
+
+    final url = Uri.parse(endpoint);
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+          'ngrok-skip-browser-warning': '69420',
+        },
+      );
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
         if (responseData['success'] == true) {
           return List<Map<String, dynamic>>.from(responseData['data']);
-        } else {
-          throw Exception(responseData['message'] ?? "Failed to fetch Zone Sevaks");
         }
-      } else {
-        throw Exception("Server Error ${response.statusCode}: ${response.body}");
       }
+      throw Exception("Failed to fetch Zone Sevaks");
     } catch (e) {
-      debugPrint("Zone Sevak Fetch Error: $e");
       throw Exception(e.toString().replaceAll("Exception: ", ""));
     }
   }
@@ -60,9 +90,12 @@ class ZoneSevakService {
   }) async {
     final String? token = await _storage.read(key: 'jwt_token');
 
-    if (token == null) throw Exception("Authentication error. Please log in again.");
+    if (token == null)
+      throw Exception("Authentication error. Please log in again.");
 
-    final url = Uri.parse('${Constants.ngrokBaseUrl}${Constants.zoneSevakEndpoint}');
+    final url = Uri.parse(
+      '${Constants.ngrokBaseUrl}${Constants.zoneSevakEndpoint}',
+    );
     final Map<String, dynamic> payload = {
       "nickname": nickname,
       "name": name,
@@ -71,7 +104,7 @@ class ZoneSevakService {
       "password": password,
       "livePhotoUrl": livePhotoUrl,
       "adharNo": adharNo,
-      "zoneIds": zoneIds, 
+      "zoneIds": zoneIds,
     };
 
     final response = await http.post(
@@ -86,27 +119,38 @@ class ZoneSevakService {
 
     if (response.statusCode != 201 && response.statusCode != 200) {
       debugPrint("RAW BACKEND RESPONSE: ${response.body}");
-      
+
       final responseData = jsonDecode(response.body);
-      
-      if (responseData.containsKey('errors') && responseData['errors'] != null) {
+
+      if (responseData.containsKey('errors') &&
+          responseData['errors'] != null) {
         final Map<String, dynamic> fieldErrors = responseData['errors'];
-        final errorMessage = fieldErrors.entries.map((e) => "${e.key}: ${e.value}").join('\n');
+        final errorMessage = fieldErrors.entries
+            .map((e) => "${e.key}: ${e.value}")
+            .join('\n');
         throw Exception(errorMessage);
       }
-      throw Exception(responseData['message'] ?? "Unknown Server Error: ${response.statusCode}");
+      throw Exception(
+        responseData['message'] ??
+            "Unknown Server Error: ${response.statusCode}",
+      );
     }
   }
 
   // ── Update Zone Sevak ──
-  Future<void> updateZoneSevak(String sevakId, Map<String, dynamic> payload) async {
+  Future<void> updateZoneSevak(
+    String sevakId,
+    Map<String, dynamic> payload,
+  ) async {
     final String? token = await _storage.read(key: 'jwt_token');
 
     if (token == null) {
       throw Exception("Authentication error. Please log in again.");
     }
 
-    final url = Uri.parse('${Constants.ngrokBaseUrl}${Constants.zoneSevakEndpoint}/$sevakId');
+    final url = Uri.parse(
+      '${Constants.ngrokBaseUrl}${Constants.zoneSevakEndpoint}/$sevakId',
+    );
 
     final response = await http.put(
       url,

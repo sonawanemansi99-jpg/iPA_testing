@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
 class ZoneSevakListPage extends StatefulWidget {
-  const ZoneSevakListPage({super.key});
+  final int? adminId;
+  const ZoneSevakListPage({super.key, this.adminId});
 
   @override
   State<ZoneSevakListPage> createState() => _ZoneSevakListPageState();
@@ -47,7 +48,7 @@ class _ZoneSevakListPageState extends State<ZoneSevakListPage>
   }
 
   void _loadSevaks() {
-    _sevaksFuture = _zoneSevakService.fetchMyZoneSevaks();
+    _sevaksFuture = _zoneSevakService.fetchMyZoneSevaks(adminId: widget.adminId);
   }
 
   Future<void> _refreshSevaks() async {
@@ -115,10 +116,10 @@ class _ZoneSevakListPageState extends State<ZoneSevakListPage>
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Text(
-                          "ज़ोन सेवक सूची",
-                          style: TextStyle(
+                          widget.adminId != null ? "प्रशासक के सेवक" : "ज़ोन सेवक सूची",
+                          style: const TextStyle(
                             color: Color(0xFFFFD580),
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
@@ -126,8 +127,8 @@ class _ZoneSevakListPageState extends State<ZoneSevakListPage>
                           ),
                         ),
                         Text(
-                          "ZONE SEVAK DIRECTORY",
-                          style: TextStyle(
+                          widget.adminId != null ? "INSPECTING SEVAKS" : "ZONE SEVAK DIRECTORY",
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
                             fontWeight: FontWeight.w900,

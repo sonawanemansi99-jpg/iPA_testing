@@ -1,51 +1,38 @@
 import 'dart:convert';
 import 'package:corporator_app/core/constants/constants.dart';
-import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ZoneService {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
-  // ── Fetch Zones for the Current Admin ──
-  Future<List<Map<String, dynamic>>> fetchMyZones() async {
+  // ── Fetch Zones (Smart Routing) ──
+  Future<List<Map<String, dynamic>>> fetchMyZones({int? adminId}) async {
     final String? token = await _storage.read(key: 'jwt_token');
+    if (token == null) throw Exception("Authentication token missing.");
 
-    if (token == null || token.trim().isEmpty) {
-      throw Exception("Authentication token missing. Please log in again.");
-    }
+    // SMART ROUTING: If adminId is provided, hit the specific admin endpoint. Otherwise, hit the default.
+    final String endpoint = adminId != null 
+        ? '${Constants.ngrokBaseUrl}/zones/admin/$adminId'
+        : '${Constants.ngrokBaseUrl}${Constants.zoneEndpoint}';
 
-    // Perfectly constructed URL using your Constants
-    final url = Uri.parse('${Constants.ngrokBaseUrl}${Constants.zoneEndpoint}');
+    final url = Uri.parse(endpoint);
 
     try {
-      debugPrint("Fetching My Zones from: $url");
-
-      final response = await http.get(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-          'ngrok-skip-browser-warning': '69420', 
-        },
-      );
-
-      debugPrint("Response Status (Zones): ${response.statusCode}");
+      final response = await http.get(url, headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+        'ngrok-skip-browser-warning': '69420',
+      });
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
-        
         if (responseData['success'] == true) {
-          final List<dynamic> data = responseData['data'];
-          return List<Map<String, dynamic>>.from(data);
-        } else {
-          throw Exception(responseData['message'] ?? "Failed to fetch zones");
+          return List<Map<String, dynamic>>.from(responseData['data']);
         }
-      } else {
-        throw Exception("Server Error ${response.statusCode}: ${response.body}");
       }
+      throw Exception("Failed to fetch zones");
     } catch (e) {
-      debugPrint("Zone Fetch Error: $e");
       throw Exception(e.toString().replaceAll("Exception: ", ""));
     }
   }
