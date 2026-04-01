@@ -13,7 +13,7 @@ class ZoneService {
 
     // SMART ROUTING: If adminId is provided, hit the specific admin endpoint. Otherwise, hit the default.
     final String endpoint = adminId != null 
-        ? '${Constants.ngrokBaseUrl}/zones/admin/$adminId'
+        ? '${Constants.ngrokBaseUrl}${Constants.zoneEndpoint}/admin/$adminId'
         : '${Constants.ngrokBaseUrl}${Constants.zoneEndpoint}';
 
     final url = Uri.parse(endpoint);
@@ -38,7 +38,7 @@ class ZoneService {
   }
 
   // ── CREATE ZONE WITH AREAS ──
-  Future<void> createZoneWithAreas(String zoneName, List<Map<String, String>> areas) async {
+  Future<void> createZoneWithAreas(String zoneName, List<Map<String, String>> areas, {int? adminId}) async {
     final String? token = await _storage.read(key: 'jwt_token');
 
     if (token == null) throw Exception("Authentication token missing.");
@@ -49,6 +49,11 @@ class ZoneService {
       "name": zoneName,
       "newAreas": areas,
     };
+    
+    // Add adminId to the payload if it was provided (Super Admin God Mode)
+    if (adminId != null) {
+      payload["adminId"] = adminId;
+    }
 
     final response = await http.post(
       url,
@@ -72,7 +77,7 @@ class ZoneService {
     
     if (token == null) throw Exception("Authentication token missing.");
     
-    final url = Uri.parse('${Constants.ngrokBaseUrl}/zones/unassigned'); 
+    final url = Uri.parse('${Constants.ngrokBaseUrl}${Constants.zoneEndpoint}/unallocated'); 
 
     final response = await http.get(
       url,

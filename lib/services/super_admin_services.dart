@@ -7,7 +7,19 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 class SuperAdminService {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
-  // ── Register Corporator (Admin) ──
+  // ── Helper to inject tokens and ngrok headers ──
+  Future<Map<String, String>> _getHeaders() async {
+    final String? token = await _storage.read(key: 'jwt_token');
+    if (token == null) throw Exception("Authentication token not found");
+    
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+      'ngrok-skip-browser-warning': '69420',
+    };
+  }
+
+  // ── Register Corporator / Admin ──
   Future<void> registerCorporator({
     required String nickname,
     required String name,
@@ -17,62 +29,58 @@ class SuperAdminService {
     required String livePhotoUrl,
     required String area,
     required String adharNo,
+    required bool autoCreateGroup,    
+    int? existingAdminGroupId,        
   }) async {
-    final String? token = await _storage.read(key: 'jwt_token');
-    final String? superAdminIdStr = await _storage.read(key: 'user_id');
+    final headers = await _getHeaders();
+    final response = await http.post(
+      Uri.parse('${Constants.ngrokBaseUrl}/admins'), 
+      headers: headers,
+      body: jsonEncode({
+        "nickname": nickname,
+        "name": name,
+        "mobileNumber": mobileNo,
+        "email": email,
+        "password": password,
+        "livePhotoUrl": livePhotoUrl,
+        "area": area.isEmpty ? null : area, 
+        "adharNo": adharNo,
+        "autoCreateGroup": autoCreateGroup,
+        "existingAdminGroupId": existingAdminGroupId,
+      }),
+    );
 
-    if (token == null || superAdminIdStr == null) {
-      throw Exception("Authentication error. Please log in again.");
+    if (response.statusCode != 201 && response.statusCode != 200) {
+      final errorData = jsonDecode(response.body);
+      debugPrint("BACKEND ERROR BODY: ${response.body}");
+      // Handle Spring Boot validation errors safely
+      if (errorData.containsKey('errors') && errorData['errors'] != null) {
+        final Map<String, dynamic> fieldErrors = errorData['errors'];
+        final errorMessage = fieldErrors.entries.map((e) => "${e.key}: ${e.value}").join('\n');
+        throw Exception(errorMessage);
+      }
+      throw Exception(errorData['message'] ?? "Registration failed");
     }
+  }
 
-    final int parsedSuperAdminId = int.tryParse(superAdminIdStr) ?? 1;
-    
-    // Using standardized Ngrok Base URL
-    final url = Uri.parse('${Constants.ngrokBaseUrl}${Constants.adminEndpoint}'); 
-
-    final Map<String, dynamic> payload = {
-      "nickname": nickname,
-      "name": name,
-      "mobileNumber": mobileNo,
-      "email": email,
-      "password": password,
-      "livePhotoUrl": livePhotoUrl,
-      "area": area,
-      "adharNo": adharNo,
-      "superAdminId": parsedSuperAdminId, // Kept this if your Spring Boot DTO still requires it
-    };
-
+  // ── Fetch Admin Groups for Dropdown ──
+  Future<List<Map<String, dynamic>>> getAdminGroupsForDropdown() async {
     try {
-      debugPrint("Registering Corporator at: $url");
-
-      final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-          'ngrok-skip-browser-warning': '69420', // Crucial for Ngrok bypass
-        },
-        body: jsonEncode(payload),
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('${Constants.ngrokBaseUrl}/admin-groups/dropdown'),
+        headers: headers,
       );
 
-      debugPrint("Response Status (Register): ${response.statusCode}");
-
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
-        if (responseData['success'] == true) {
-          return; // Success!
-        } else {
-          throw Exception(responseData['message'] ?? "Failed to create corporator.");
-        }
-      } else {
-        // Safe error extraction in case backend sends an error map
-        final errorData = jsonDecode(response.body);
-        throw Exception(errorData['message'] ?? "Server error: ${response.statusCode}");
+      debugPrint("Group Dropdown Status: ${response.statusCode}");
+      if (response.statusCode == 200) {
+        final List data = jsonDecode(response.body)['data'];
+        return data.map((e) => e as Map<String, dynamic>).toList();
       }
     } catch (e) {
-      debugPrint("Registration Error: $e");
-      throw Exception(e.toString().replaceAll("Exception: ", ""));
+      debugPrint("Error in getAdminGroupsForDropdown: $e");
     }
+    return [];
   }
 
   // ── Create New Super Admin ──
@@ -87,31 +95,16 @@ class SuperAdminService {
 
       if (response.statusCode != 201 && response.statusCode != 200) {
         final errorData = jsonDecode(response.body);
-        
-        // Handle Spring Boot validation errors safely
         if (errorData.containsKey('errors') && errorData['errors'] != null) {
           final Map<String, dynamic> fieldErrors = errorData['errors'];
           final errorMessage = fieldErrors.entries.map((e) => "${e.key}: ${e.value}").join('\n');
           throw Exception(errorMessage);
         }
-        
         throw Exception(errorData['message'] ?? "Failed to create Super Admin.");
       }
     } catch (e) {
       throw Exception(e.toString().replaceAll("Exception: ", ""));
     }
-  }
-
-  // ── Helper to inject tokens and ngrok headers ──
-  Future<Map<String, String>> _getHeaders() async {
-    final String? token = await _storage.read(key: 'jwt_token');
-    if (token == null) throw Exception("Authentication token not found");
-    
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token',
-      'ngrok-skip-browser-warning': '69420',
-    };
   }
 
   // ── 1. Fetch All Admins ──
@@ -154,7 +147,6 @@ class SuperAdminService {
   }
 
   // ── 3. Fetch Admin-Specific Scoped Data (For Inspector View) ──
-  
   Future<List<dynamic>> getAdminSpecificZones(int adminId) async {
     final headers = await _getHeaders();
     final response = await http.get(Uri.parse('${Constants.ngrokBaseUrl}/zones/admin/$adminId'), headers: headers);
@@ -297,24 +289,24 @@ class SuperAdminService {
   }
 
   Future<void> updateAdmin(int id, Map<String, dynamic> payload) async {
-  final headers = await _getHeaders();
-  final response = await http.put(
-    Uri.parse('${Constants.ngrokBaseUrl}/admins/$id'),
-    headers: headers,
-    body: jsonEncode(payload),
-  );
-  if (response.statusCode != 200) throw Exception("Update failed: ${response.body}");
-}
-
-Future<Map<String, dynamic>> getAdminById(int adminId) async {
-  final headers = await _getHeaders();
-  final response = await http.get(
-    Uri.parse('${Constants.ngrokBaseUrl}/admins/$adminId'),
-    headers: headers,
-  );
-  if (response.statusCode == 200) {
-    return jsonDecode(response.body)['data'];
+    final headers = await _getHeaders();
+    final response = await http.put(
+      Uri.parse('${Constants.ngrokBaseUrl}/admins/$id'),
+      headers: headers,
+      body: jsonEncode(payload),
+    );
+    if (response.statusCode != 200) throw Exception("Update failed: ${response.body}");
   }
-  throw Exception("Failed to fetch admin details");
-}
+
+  Future<Map<String, dynamic>> getAdminById(int adminId) async {
+    final headers = await _getHeaders();
+    final response = await http.get(
+      Uri.parse('${Constants.ngrokBaseUrl}/admins/$adminId'),
+      headers: headers,
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body)['data'];
+    }
+    throw Exception("Failed to fetch admin details");
+  }
 }

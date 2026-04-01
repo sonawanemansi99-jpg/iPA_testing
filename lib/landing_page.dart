@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:corporator_app/features/auth/presentation/login.dart';
+import 'package:corporator_app/features/auth/login.dart';
 import 'package:flutter/material.dart';
 
 class LandingPage extends StatefulWidget {
@@ -84,7 +84,7 @@ class _LandingPageState extends State<LandingPage>
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+    // final size = MediaQuery.of(context).size;
 
     return Scaffold(
       body: Stack(

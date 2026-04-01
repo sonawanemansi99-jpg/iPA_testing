@@ -13,6 +13,7 @@ class CustomSnackBar {
     required Color backgroundColor,
     required IconData icon,
   }) {
+    if (!context.mounted) return;
     // 1. Instantly hide any currently showing snackbar so they don't queue up
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
