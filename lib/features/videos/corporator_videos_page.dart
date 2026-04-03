@@ -1,6 +1,4 @@
-import 'dart:io';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+/*import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
@@ -62,7 +60,7 @@ class _CorporatorVideosPageState extends State<CorporatorVideosPage>
   }
 
   // ── Fetch uploaded video URLs from Firestore ──
-  Future<void> _fetchVideos() async {
+  Future<void> _fetchVideos() async {/*
     setState(() { _loadingVideos = true; });
     try {
       final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -82,7 +80,7 @@ class _CorporatorVideosPageState extends State<CorporatorVideosPage>
       setState(() { _errorMsg = "Failed to load videos: $e"; });
     } finally {
       setState(() { _loadingVideos = false; });
-    }
+    }*/
   }
 
   // ── Pick & upload video ──
@@ -716,4 +714,4 @@ class _VideoCardState extends State<_VideoCard> {
       ),
     );
   }
-}
+}*/

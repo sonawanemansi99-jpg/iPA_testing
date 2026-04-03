@@ -65,7 +65,7 @@ class _AdminGroupInspectorPageState extends State<AdminGroupInspectorPage> {
     }
   }
 
-  // ── THEMED REMOVE DIALOG ──
+  // ── THEMED REMOVE DIALOG WITH LOGIC RESTORED ──
   Future<void> _removeAdmin(int adminId, String adminName) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -135,7 +135,15 @@ class _AdminGroupInspectorPageState extends State<AdminGroupInspectorPage> {
         await _groupService.removeAdminFromGroup(widget.groupId, adminId);
         if (!mounted) return;
         CustomSnackBar.showSuccess(context, "$adminName removed successfully.");
-        await _fetchData();
+        
+        // ── RESTORED FIX: CHECK IF IT WAS THE LAST MEMBER ──
+        if (_groupMembers.length == 1) {
+          CustomSnackBar.showInfo(context, "Group became empty and was auto-deleted.");
+          Navigator.pop(context); // Safely exit page since group no longer exists
+        } else {
+          await _fetchData(); // Safe to reload remaining members
+        }
+        
       } catch (e) {
         if (!mounted) return;
         CustomSnackBar.showError(context, e.toString().replaceAll("Exception: ", ""));
@@ -455,7 +463,6 @@ class _AdminGroupInspectorPageState extends State<AdminGroupInspectorPage> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // ── PROPERLY INLINED TITLE AND PENCIL ──
               Expanded(
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -478,8 +485,6 @@ class _AdminGroupInspectorPageState extends State<AdminGroupInspectorPage> {
                   ],
                 ),
               ),
-              
-              // ── STATUS BADGE PUSHED TO THE RIGHT ──
               Container(
                 margin: const EdgeInsets.only(left: 8),
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
